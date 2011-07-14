@@ -51,12 +51,16 @@ public class VaadinGraph extends AbstractComponent {
 		final Color nfc = (Color) vs.getNodeAppearanceCalculator().getDefaultAppearance().get(VisualPropertyType.NODE_FILL_COLOR);
 		final Float nbw = (Float) vs.getNodeAppearanceCalculator().getDefaultAppearance().get(VisualPropertyType.NODE_LINE_WIDTH);
 		final Double ns = (Double) vs.getNodeAppearanceCalculator().getDefaultAppearance().get(VisualPropertyType.NODE_SIZE);
+		final Color nsc = vs.getGlobalAppearanceCalculator().getDefaultNodeSelectionColor();
+		final Color esc = vs.getGlobalAppearanceCalculator().getDefaultEdgeSelectionColor();
 
 		target.addAttribute("bc", "rgb(" + bc.getRed() + "," + bc.getGreen() + "," + bc.getBlue() + ")");
 		target.addAttribute("ec", "rgb(" + ec.getRed() + "," + ec.getGreen() + "," + ec.getBlue() + ")");
 		target.addAttribute("elw", elw.intValue());
 		target.addAttribute("nbc", "rgb(" + nbc.getRed() + "," + nbc.getGreen() + "," + nbc.getBlue() + ")");
 		target.addAttribute("nfc", "rgb(" + nfc.getRed() + "," + nfc.getGreen() + "," + nfc.getBlue() + ")");
+		target.addAttribute("nsc", "rgb(" + nsc.getRed() + "," + nsc.getGreen() + "," + nsc.getBlue() + ")");
+		target.addAttribute("esc", "rgb(" + esc.getRed() + "," + esc.getGreen() + "," + esc.getBlue() + ")");
 		target.addAttribute("nbw", nbw.intValue());
 		target.addAttribute("ns", ns.intValue());
 
