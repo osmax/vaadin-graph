@@ -67,6 +67,7 @@ public class VaadingraphApplication extends Application {
 		styleSelect.addItem("Nested Network Style");
 		styleSelect.addItem("Sample1");
 		styleSelect.addItem("Solid");
+		styleSelect.addItem("Universe");
 
 		styleSelect.setNullSelectionAllowed(false);
 		styleSelect.setImmediate(true);

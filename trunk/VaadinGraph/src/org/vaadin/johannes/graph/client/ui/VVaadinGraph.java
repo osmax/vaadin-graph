@@ -8,6 +8,7 @@ import java.util.Set;
 import org.vaadin.gwtgraphics.client.DrawingArea;
 import org.vaadin.gwtgraphics.client.Shape;
 import org.vaadin.gwtgraphics.client.shape.Circle;
+import org.vaadin.gwtgraphics.client.shape.Rectangle;
 
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
@@ -51,11 +52,15 @@ public class VVaadinGraph extends Composite implements Paintable, ClickHandler, 
 	private Map<String, Shape> nodes = new HashMap<String, Shape>();
 	private Map<Shape, Set<VEdge>> shapeToEdgesMap = new HashMap<Shape, Set<VEdge>>();
 	private final Set<Shape> paintedShapes = new HashSet<Shape>();
+	private final Set<Shape> selectedShapes = new HashSet<Shape>();
 	private boolean skipEvents;
 
 	private String edgeColor;
 	private String nodeBorderColor;
 	private String nodeFillColor;
+	private String nodeSelectionColor;
+	private String edgeSelectionColor;
+
 	private int edgeLineWidth;
 	private int nodeBorderWidth;
 	private int nodeSize;
@@ -105,6 +110,8 @@ public class VVaadinGraph extends Composite implements Paintable, ClickHandler, 
 		edgeLineWidth = uidl.getIntAttribute("elw");
 		nodeBorderWidth = uidl.getIntAttribute("nbw");
 		nodeSize = uidl.getIntAttribute("ns") / 2;
+		nodeSelectionColor = uidl.getStringAttribute("nsc");
+		edgeSelectionColor = uidl.getStringAttribute("esc");
 
 		panel.setSize((50 + 1 + gwidth) + "px", (25 + gheight) + "px");
 		canvas.setWidth(gwidth);
@@ -178,6 +185,10 @@ public class VVaadinGraph extends Composite implements Paintable, ClickHandler, 
 		if (updatedShapes == null || updatedShapes.length == 0) {
 			canvas.clear();
 			paintedShapes.clear();
+			final Rectangle bg = new Rectangle(0, 0, gwidth, gheight);
+			bg.setFillColor(bgColor);
+			bg.setStrokeColor(bgColor);
+			canvas.add(bg);
 			for (final Map.Entry<String, VEdge> entry : edges.entrySet()) {
 				final VEdge edge = entry.getValue();
 				canvas.add(edge);
@@ -258,8 +269,15 @@ public class VVaadinGraph extends Composite implements Paintable, ClickHandler, 
 		}
 		final Object sender = event.getSource();
 		if (sender instanceof Shape) {
-			final Shape node = (Shape) sender;
-			node.setFillColor("yellow");
+			if (selectedShapes.contains(sender)) {
+				final Shape node = (Shape) sender;
+				node.setFillColor(nodeFillColor);
+				selectedShapes.remove(node);
+			} else {
+				final Shape node = (Shape) sender;
+				node.setFillColor(nodeSelectionColor);
+				selectedShapes.add(node);
+			}
 		}
 	}
 }
