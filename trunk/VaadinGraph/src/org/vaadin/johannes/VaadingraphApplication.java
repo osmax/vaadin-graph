@@ -6,6 +6,9 @@ import com.vaadin.Application;
 import com.vaadin.data.Item;
 import com.vaadin.data.Property;
 import com.vaadin.data.Property.ValueChangeEvent;
+import com.vaadin.ui.Alignment;
+import com.vaadin.ui.Button.ClickEvent;
+import com.vaadin.ui.CheckBox;
 import com.vaadin.ui.Component;
 import com.vaadin.ui.HorizontalLayout;
 import com.vaadin.ui.NativeSelect;
@@ -55,9 +58,26 @@ public class VaadingraphApplication extends Application {
 		hl.addComponent(getLayoutSelect());
 		hl.addComponent(getNodeSizeSelect());
 		hl.addComponent(getStyleSelect());
+		final Component cb = getTextHideBox();
+		hl.addComponent(cb);
+		hl.setComponentAlignment(cb, Alignment.BOTTOM_LEFT);
 		graph = getNetworkGraph(WIDTH, HEIGHT);
 		mainLayout.addComponent(graph);
 		setMainWindow(mainWindow);
+	}
+
+	private Component getTextHideBox() {
+		final CheckBox cb = new CheckBox("Hide texts");
+		cb.setImmediate(true);
+		cb.setValue(false);
+		cb.addListener(new CheckBox.ClickListener() {
+			private static final long serialVersionUID = 1981652250991931328L;
+
+			public void buttonClick(final ClickEvent event) {
+				graph.setTextsVisible(!(Boolean) cb.getValue());
+			}
+		});
+		return cb;
 	}
 
 	private Component getStyleSelect() {
