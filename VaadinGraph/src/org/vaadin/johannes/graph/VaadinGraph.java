@@ -35,6 +35,7 @@ public class VaadinGraph extends AbstractComponent {
 
 	private double cytoscapeViewWidth = 0;
 	private double cytoscapeViewHeight = 0;
+	private boolean textsVisible = true;
 
 	@Override
 	public void paintContent(final PaintTarget target) throws PaintException {
@@ -42,15 +43,22 @@ public class VaadinGraph extends AbstractComponent {
 		target.addAttribute("title", title);
 		target.addAttribute("gwidth", width);
 		target.addAttribute("gheight", height);
+		target.addAttribute("texts", textsVisible);
 
 		final VisualStyle vs = finalView.getVisualStyle();
-		final Color bc = vs.getGlobalAppearanceCalculator().getDefaultBackgroundColor();
+
 		final Color ec = (Color) vs.getEdgeAppearanceCalculator().getDefaultAppearance().get(VisualPropertyType.EDGE_COLOR);
-		final Float elw = (Float) vs.getEdgeAppearanceCalculator().getDefaultAppearance().get(VisualPropertyType.EDGE_LINE_WIDTH);
 		final Color nbc = (Color) vs.getNodeAppearanceCalculator().getDefaultAppearance().get(VisualPropertyType.NODE_BORDER_COLOR);
 		final Color nfc = (Color) vs.getNodeAppearanceCalculator().getDefaultAppearance().get(VisualPropertyType.NODE_FILL_COLOR);
+		final Color nlc = (Color) vs.getNodeAppearanceCalculator().getDefaultAppearance().get(VisualPropertyType.NODE_LABEL_COLOR);
+		final Color elc = (Color) vs.getNodeAppearanceCalculator().getDefaultAppearance().get(VisualPropertyType.EDGE_LABEL_COLOR);
+		final Float elw = (Float) vs.getEdgeAppearanceCalculator().getDefaultAppearance().get(VisualPropertyType.EDGE_LINE_WIDTH);
 		final Float nbw = (Float) vs.getNodeAppearanceCalculator().getDefaultAppearance().get(VisualPropertyType.NODE_LINE_WIDTH);
 		final Double ns = (Double) vs.getNodeAppearanceCalculator().getDefaultAppearance().get(VisualPropertyType.NODE_SIZE);
+		final Double efs = (Double) vs.getNodeAppearanceCalculator().getDefaultAppearance().get(VisualPropertyType.EDGE_FONT_SIZE);
+		final Double nfs = (Double) vs.getNodeAppearanceCalculator().getDefaultAppearance().get(VisualPropertyType.NODE_FONT_SIZE);
+
+		final Color bc = vs.getGlobalAppearanceCalculator().getDefaultBackgroundColor();
 		final Color nsc = vs.getGlobalAppearanceCalculator().getDefaultNodeSelectionColor();
 		final Color esc = vs.getGlobalAppearanceCalculator().getDefaultEdgeSelectionColor();
 
@@ -61,8 +69,12 @@ public class VaadinGraph extends AbstractComponent {
 		target.addAttribute("nfc", "rgb(" + nfc.getRed() + "," + nfc.getGreen() + "," + nfc.getBlue() + ")");
 		target.addAttribute("nsc", "rgb(" + nsc.getRed() + "," + nsc.getGreen() + "," + nsc.getBlue() + ")");
 		target.addAttribute("esc", "rgb(" + esc.getRed() + "," + esc.getGreen() + "," + esc.getBlue() + ")");
+		target.addAttribute("nlc", "rgb(" + nlc.getRed() + "," + nlc.getGreen() + "," + nlc.getBlue() + ")");
+		target.addAttribute("elc", "rgb(" + elc.getRed() + "," + elc.getGreen() + "," + elc.getBlue() + ")");
 		target.addAttribute("nbw", nbw.intValue());
 		target.addAttribute("ns", ns.intValue());
+		target.addAttribute("efs", efs.intValue());
+		target.addAttribute("nfs", nfs.intValue());
 
 		for (final int ei : edges) {
 			final Edge e = network.getEdge(ei);
@@ -153,6 +165,11 @@ public class VaadinGraph extends AbstractComponent {
 	public void setWidthAndHeight(final int width, final int height) {
 		this.width = width;
 		this.height = height;
+		requestRepaint();
+	}
+
+	public void setTextsVisible(final boolean b) {
+		textsVisible = b;
 		requestRepaint();
 	}
 }

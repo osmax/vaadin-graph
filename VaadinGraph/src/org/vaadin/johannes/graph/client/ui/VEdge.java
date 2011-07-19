@@ -5,21 +5,27 @@ import org.vaadin.gwtgraphics.client.Shape;
 
 public class VEdge extends Line {
 
-	private final Shape node1;
-	private final Shape node2;
+	private final VNode node1;
+	private final VNode node2;
+	private final Shape text;
 
-	public VEdge(final Shape node1, final Shape node2) {
+	public VEdge(final VNode node1, final VNode node2, final Shape text) {
 		super(node1.getX(), node1.getY(), node2.getX(), node2.getY());
 		this.node1 = node1;
 		this.node2 = node2;
+		this.text = text;
 	}
 
-	public Shape getFirstNode() {
+	public VNode getFirstNode() {
 		return node1;
 	}
 
-	public Shape getSecondNode() {
+	public VNode getSecondNode() {
 		return node2;
+	}
+
+	public Shape getText() {
+		return text;
 	}
 
 }
