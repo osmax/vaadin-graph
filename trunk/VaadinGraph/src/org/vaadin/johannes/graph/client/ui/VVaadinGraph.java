@@ -113,6 +113,7 @@ public class VVaadinGraph extends Composite implements Paintable, ClickHandler, 
 		// Save the client side identifier (paintable id) for the widget
 		paintableId = uidl.getId();
 
+		// general style attributes
 		gwidth = uidl.getIntAttribute("gwidth");
 		gheight = uidl.getIntAttribute("gheight");
 		textsVisible = uidl.getBooleanAttribute("texts");
@@ -136,6 +137,7 @@ public class VVaadinGraph extends Composite implements Paintable, ClickHandler, 
 		canvas.getElement().getStyle().setPropertyPx("width", gwidth);
 		canvas.getElement().getStyle().setPropertyPx("height", gheight);
 		canvas.addMouseUpHandler(this);
+		canvas.addMouseDownHandler(this);
 		canvas.addMouseMoveHandler(this);
 		canvas.addMouseWheelHandler(this);
 
@@ -161,6 +163,21 @@ public class VVaadinGraph extends Composite implements Paintable, ClickHandler, 
 				node.setFontSize(nodeFontSize);
 				node.setFontFamily(fontFamily);
 				node.setTextVisible(textsVisible);
+
+				// node specific styles
+				if (child.hasAttribute("_n1bc")) {
+					shape.setStrokeColor(child.getStringAttribute("_n1bc"));
+				}
+				if (child.hasAttribute("_n1fc")) {
+					shape.setFillColor(child.getStringAttribute("_n1fc"));
+				}
+				if (child.hasAttribute("_n1bw")) {
+					shape.setStrokeWidth(child.getIntAttribute("_n1bw"));
+				}
+				if (child.hasAttribute("_n1s")) {
+					shape.setRadius(child.getIntAttribute("_n1s") / 2);
+				}
+
 				node.addClickHandler(this);
 				node.addMouseDownHandler(this);
 				node.addMouseUpHandler(this);
@@ -178,6 +195,21 @@ public class VVaadinGraph extends Composite implements Paintable, ClickHandler, 
 				node.setFontSize(nodeFontSize);
 				node.setFontFamily(fontFamily);
 				node.setTextVisible(textsVisible);
+
+				// node specific styles
+				if (child.hasAttribute("_n2bc")) {
+					shape.setStrokeColor(child.getStringAttribute("_n2bc"));
+				}
+				if (child.hasAttribute("_n2fc")) {
+					shape.setFillColor(child.getStringAttribute("_n2fc"));
+				}
+				if (child.hasAttribute("_n2bw")) {
+					shape.setStrokeWidth(child.getIntAttribute("_n2bw"));
+				}
+				if (child.hasAttribute("_n2s")) {
+					shape.setRadius(child.getIntAttribute("_n2s") / 2);
+				}
+
 				node.addClickHandler(this);
 				node.addMouseDownHandler(this);
 				node.addMouseUpHandler(this);
@@ -198,6 +230,14 @@ public class VVaadinGraph extends Composite implements Paintable, ClickHandler, 
 			final VEdge edge = new VEdge(node1, node2, text);
 			edge.setStrokeColor(edgeColor);
 			edge.setStrokeWidth(edgeLineWidth);
+			// edge specific style attributes
+			if (child.hasAttribute("_ec")) {
+				edge.setStrokeColor(child.getStringAttribute("_ec"));
+			}
+			if (child.hasAttribute("_elw")) {
+				edge.setStrokeWidth(child.getIntAttribute("_elw"));
+			}
+
 			Set<VEdge> edgs = shapeToEdgesMap.get(node1);
 			if (edgs == null) {
 				edgs = new HashSet<VEdge>();
@@ -303,8 +343,11 @@ public class VVaadinGraph extends Composite implements Paintable, ClickHandler, 
 			updateEdges(movedShape, true);
 			canvas.remove(movedShape);
 			canvas.add(movedShape);
-		} else if (onMove) {
+		} else if (onMove && event.getSource().equals(canvas)) {
+			VConsole.log("onMouseMove");
 			moveGraph(startX - event.getX(), startY - event.getY());
+			startX = event.getX();
+			startY = event.getY();
 		}
 	}
 
@@ -351,14 +394,14 @@ public class VVaadinGraph extends Composite implements Paintable, ClickHandler, 
 	public void onMouseWheel(final MouseWheelEvent event) {
 		final int delta = event.getDeltaY();
 		if (delta < 0) {
-			zoomOut();
+			zoomIn(event.getX(), event.getY());
 		} else if (delta > 0) {
-			zoomIn();
+			zoomOut(event.getX(), event.getY());
 		}
 		paintGraph();
 	}
 
-	private void zoomIn() {
+	private void zoomIn(final int x, final int y) {
 		for (final VNode n : paintedShapes) {
 			n.setX((int) (n.getX() * 1.1));
 			n.setY((int) (n.getY() * 1.1));
@@ -367,9 +410,10 @@ public class VVaadinGraph extends Composite implements Paintable, ClickHandler, 
 			}
 			updateEdges(n, false);
 		}
+
 	}
 
-	private void zoomOut() {
+	private void zoomOut(final int x, final int y) {
 		for (final VNode n : paintedShapes) {
 			n.setX((int) (n.getX() * 0.9));
 			n.setY((int) (n.getY() * 0.9));
@@ -382,11 +426,16 @@ public class VVaadinGraph extends Composite implements Paintable, ClickHandler, 
 
 	private void moveGraph(final int x, final int y) {
 		for (final VNode shape : paintedShapes) {
-			shape.setX(shape.getX() + x);
-			shape.setY(shape.getY() + y);
+			shape.setX(shape.getX() - x);
+			shape.setY(shape.getY() - y);
 			updateEdges(shape, false);
 		}
 		paintGraph();
+	}
+
+	private void moveNode(final VNode node, final double x, final double y) {
+		node.setX(node.getX() - (int) x);
+		node.setY(node.getY() - (int) y);
 	}
 
 }

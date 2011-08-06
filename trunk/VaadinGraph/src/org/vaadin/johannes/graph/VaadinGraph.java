@@ -11,7 +11,11 @@ import com.vaadin.terminal.PaintTarget;
 import com.vaadin.ui.AbstractComponent;
 
 import cytoscape.CyNetwork;
+import cytoscape.Cytoscape;
 import cytoscape.view.CyNetworkView;
+import cytoscape.visual.EdgeAppearance;
+import cytoscape.visual.NodeAppearance;
+import cytoscape.visual.VisualMappingManager;
 import cytoscape.visual.VisualPropertyType;
 import cytoscape.visual.VisualStyle;
 
@@ -35,7 +39,9 @@ public class VaadinGraph extends AbstractComponent {
 
 	private double cytoscapeViewWidth = 0;
 	private double cytoscapeViewHeight = 0;
-	private boolean textsVisible = true;
+	private boolean textsVisible = false;
+	private boolean styleOptimization;
+	private final boolean useFitting = false;
 
 	@Override
 	public void paintContent(final PaintTarget target) throws PaintException {
@@ -45,32 +51,33 @@ public class VaadinGraph extends AbstractComponent {
 		target.addAttribute("gheight", height);
 		target.addAttribute("texts", textsVisible);
 
-		final VisualStyle vs = finalView.getVisualStyle();
+		final VisualMappingManager vizmapper = Cytoscape.getVisualMappingManager();
+		final VisualStyle vs = vizmapper.getVisualStyle();
 
 		final Color ec = (Color) vs.getEdgeAppearanceCalculator().getDefaultAppearance().get(VisualPropertyType.EDGE_COLOR);
 		final Color nbc = (Color) vs.getNodeAppearanceCalculator().getDefaultAppearance().get(VisualPropertyType.NODE_BORDER_COLOR);
 		final Color nfc = (Color) vs.getNodeAppearanceCalculator().getDefaultAppearance().get(VisualPropertyType.NODE_FILL_COLOR);
 		final Color nlc = (Color) vs.getNodeAppearanceCalculator().getDefaultAppearance().get(VisualPropertyType.NODE_LABEL_COLOR);
 		final Color elc = (Color) vs.getNodeAppearanceCalculator().getDefaultAppearance().get(VisualPropertyType.EDGE_LABEL_COLOR);
-		final Float elw = (Float) vs.getEdgeAppearanceCalculator().getDefaultAppearance().get(VisualPropertyType.EDGE_LINE_WIDTH);
-		final Float nbw = (Float) vs.getNodeAppearanceCalculator().getDefaultAppearance().get(VisualPropertyType.NODE_LINE_WIDTH);
-		final Double ns = (Double) vs.getNodeAppearanceCalculator().getDefaultAppearance().get(VisualPropertyType.NODE_SIZE);
-		final Double efs = (Double) vs.getNodeAppearanceCalculator().getDefaultAppearance().get(VisualPropertyType.EDGE_FONT_SIZE);
-		final Double nfs = (Double) vs.getNodeAppearanceCalculator().getDefaultAppearance().get(VisualPropertyType.NODE_FONT_SIZE);
+		final Number elw = (Number) vs.getEdgeAppearanceCalculator().getDefaultAppearance().get(VisualPropertyType.EDGE_LINE_WIDTH);
+		final Number nbw = (Number) vs.getNodeAppearanceCalculator().getDefaultAppearance().get(VisualPropertyType.NODE_LINE_WIDTH);
+		final Number ns = (Number) vs.getNodeAppearanceCalculator().getDefaultAppearance().get(VisualPropertyType.NODE_SIZE);
+		final Number efs = (Number) vs.getNodeAppearanceCalculator().getDefaultAppearance().get(VisualPropertyType.EDGE_FONT_SIZE);
+		final Number nfs = (Number) vs.getNodeAppearanceCalculator().getDefaultAppearance().get(VisualPropertyType.NODE_FONT_SIZE);
 
 		final Color bc = vs.getGlobalAppearanceCalculator().getDefaultBackgroundColor();
 		final Color nsc = vs.getGlobalAppearanceCalculator().getDefaultNodeSelectionColor();
 		final Color esc = vs.getGlobalAppearanceCalculator().getDefaultEdgeSelectionColor();
 
-		target.addAttribute("bc", "rgb(" + bc.getRed() + "," + bc.getGreen() + "," + bc.getBlue() + ")");
-		target.addAttribute("ec", "rgb(" + ec.getRed() + "," + ec.getGreen() + "," + ec.getBlue() + ")");
+		target.addAttribute("bc", getRGB(bc));
+		target.addAttribute("ec", getRGB(ec));
 		target.addAttribute("elw", elw.intValue());
-		target.addAttribute("nbc", "rgb(" + nbc.getRed() + "," + nbc.getGreen() + "," + nbc.getBlue() + ")");
-		target.addAttribute("nfc", "rgb(" + nfc.getRed() + "," + nfc.getGreen() + "," + nfc.getBlue() + ")");
-		target.addAttribute("nsc", "rgb(" + nsc.getRed() + "," + nsc.getGreen() + "," + nsc.getBlue() + ")");
-		target.addAttribute("esc", "rgb(" + esc.getRed() + "," + esc.getGreen() + "," + esc.getBlue() + ")");
-		target.addAttribute("nlc", "rgb(" + nlc.getRed() + "," + nlc.getGreen() + "," + nlc.getBlue() + ")");
-		target.addAttribute("elc", "rgb(" + elc.getRed() + "," + elc.getGreen() + "," + elc.getBlue() + ")");
+		target.addAttribute("nbc", getRGB(nbc));
+		target.addAttribute("nfc", getRGB(nfc));
+		target.addAttribute("nsc", getRGB(nsc));
+		target.addAttribute("esc", getRGB(esc));
+		target.addAttribute("nlc", getRGB(nlc));
+		target.addAttribute("elc", getRGB(elc));
 		target.addAttribute("nbw", nbw.intValue());
 		target.addAttribute("ns", ns.intValue());
 		target.addAttribute("efs", efs.intValue());
@@ -90,18 +97,52 @@ public class VaadinGraph extends AbstractComponent {
 			final double xx2 = finalView.getNodeView(node2).getXPosition();
 			final double yy2 = finalView.getNodeView(node2).getYPosition();
 
-			final int x1 = (int) (((xx1 - minX) / cytoscapeViewWidth) * width);
-			final int y1 = (int) (((yy1 - minY) / cytoscapeViewHeight) * height);
-			final int x2 = (int) (((xx2 - minX) / cytoscapeViewWidth) * width);
-			final int y2 = (int) (((yy2 - minY) / cytoscapeViewHeight) * height);
+			int x1 = (int) (xx1);
+			int y1 = (int) (yy1);
+			int x2 = (int) (xx2);
+			int y2 = (int) (yy2);
+
+			if (useFitting) {
+				x1 = (int) (((xx1 - minX) / cytoscapeViewWidth) * width);
+				y1 = (int) (((yy1 - minY) / cytoscapeViewHeight) * height);
+				x2 = (int) (((xx2 - minX) / cytoscapeViewWidth) * width);
+				y2 = (int) (((yy2 - minY) / cytoscapeViewHeight) * height);
+			}
 
 			target.addAttribute("node1x", x1);
 			target.addAttribute("node1y", y1);
 			target.addAttribute("node2x", x2);
 			target.addAttribute("node2y", y2);
 
+			if (!styleOptimization) {
+				final EdgeAppearance ea = vs.getEdgeAppearanceCalculator().calculateEdgeAppearance(e, network);
+				final NodeAppearance n1a = vs.getNodeAppearanceCalculator().calculateNodeAppearance(node1, network);
+				final NodeAppearance n2a = vs.getNodeAppearanceCalculator().calculateNodeAppearance(node2, network);
+
+				target.addAttribute("_ec", getRGB((Color) ea.get(VisualPropertyType.EDGE_COLOR)));
+				target.addAttribute("_elw", ((Number) ea.get(VisualPropertyType.EDGE_LINE_WIDTH)).intValue());
+				// target.addAttribute("_elc", getRGB(elc));
+				// target.addAttribute("_efs", efs.intValue());
+
+				target.addAttribute("_n1bc", getRGB((Color) n1a.get(VisualPropertyType.NODE_BORDER_COLOR)));
+				target.addAttribute("_n1fc", getRGB((Color) n1a.get(VisualPropertyType.NODE_FILL_COLOR)));
+				target.addAttribute("_n1bw", ((Number) n1a.get(VisualPropertyType.NODE_LINE_WIDTH)).intValue());
+				target.addAttribute("_n1s", ((Number) n1a.get(VisualPropertyType.NODE_SIZE)).intValue());
+
+				target.addAttribute("_n2bc", getRGB((Color) n2a.get(VisualPropertyType.NODE_BORDER_COLOR)));
+				target.addAttribute("_n2fc", getRGB((Color) n2a.get(VisualPropertyType.NODE_FILL_COLOR)));
+				target.addAttribute("_n2bw", ((Number) n2a.get(VisualPropertyType.NODE_LINE_WIDTH)).intValue());
+				target.addAttribute("_n2s", ((Number) n2a.get(VisualPropertyType.NODE_SIZE)).intValue());
+				// target.addAttribute("_nlc", getRGB(nlc));
+				// target.addAttribute("_nfs", nfs.intValue());
+			}
+
 			target.endTag("e");
 		}
+	}
+
+	private String getRGB(final Color bc) {
+		return "rgb(" + bc.getRed() + "," + bc.getGreen() + "," + bc.getBlue() + ")";
 	}
 
 	/**
@@ -170,6 +211,16 @@ public class VaadinGraph extends AbstractComponent {
 
 	public void setTextsVisible(final boolean b) {
 		textsVisible = b;
+		requestRepaint();
+	}
+
+	/**
+	 * Optimize styles to minimize client-server traffic
+	 * 
+	 * @param b
+	 */
+	public void setOptimizedStyles(final boolean b) {
+		styleOptimization = b;
 		requestRepaint();
 	}
 }
