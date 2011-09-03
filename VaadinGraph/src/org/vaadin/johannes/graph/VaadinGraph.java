@@ -1,11 +1,24 @@
+/* 
+ * Copyright 2011 Johannes Tuikkala <johannes@vaadin.com>
+ *                           LICENCED UNDER
+ *                  GNU LESSER GENERAL PUBLIC LICENSE
+ *                     Version 3, 29 June 2007
+ */
 package org.vaadin.johannes.graph;
 
 import giny.model.Edge;
 import giny.model.Node;
 
 import java.awt.Color;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
+import com.vaadin.data.Container;
+import com.vaadin.data.Item;
+import com.vaadin.data.util.IndexedContainer;
 import com.vaadin.terminal.PaintException;
 import com.vaadin.terminal.PaintTarget;
 import com.vaadin.ui.AbstractComponent;
@@ -28,6 +41,7 @@ public class VaadinGraph extends AbstractComponent {
 	private final String title;
 	private final CyNetwork network;
 	private final int[] edges;
+	private final int[] nodes;
 	private final CyNetworkView finalView;
 	private int width;
 	private int height;
@@ -42,6 +56,11 @@ public class VaadinGraph extends AbstractComponent {
 	private boolean textsVisible = false;
 	private boolean styleOptimization;
 	private final boolean useFitting = false;
+
+	private final Set<String> selectedNodes = new HashSet<String>();
+	private final Set<String> selectedEdges = new HashSet<String>();
+	private float zoomFactor = 1;
+	private final List<GraphChangeListener> listeners;
 
 	@Override
 	public void paintContent(final PaintTarget target) throws PaintException {
@@ -141,10 +160,6 @@ public class VaadinGraph extends AbstractComponent {
 		}
 	}
 
-	private String getRGB(final Color bc) {
-		return "rgb(" + bc.getRed() + "," + bc.getGreen() + "," + bc.getBlue() + ")";
-	}
-
 	/**
 	 * Receive and handle events and other variable changes from the client.
 	 * 
@@ -153,6 +168,28 @@ public class VaadinGraph extends AbstractComponent {
 	@Override
 	public void changeVariables(final Object source, final Map<String, Object> variables) {
 		super.changeVariables(source, variables);
+		if (variables.containsKey("selectedEdges")) {
+			selectedEdges.clear();
+			final String[] strs = (String[]) variables.get("selectedEdges");
+			for (final String str : strs) {
+				selectedEdges.add(str);
+			}
+			notifyListeners();
+			System.out.printf("Selected %d edges\n", selectedEdges.size());
+		}
+		if (variables.containsKey("selectedNodes")) {
+			selectedNodes.clear();
+			final String[] strs = (String[]) variables.get("selectedNodes");
+			for (final String str : strs) {
+				selectedNodes.add(str);
+			}
+			notifyListeners();
+			System.out.printf("Selected %d nodes\n", selectedNodes.size());
+		}
+		if (variables.containsKey("zoomFactor")) {
+			zoomFactor = (Float) variables.get("zoomFactor");
+			System.out.println("Zoom factor: " + zoomFactor);
+		}
 	}
 
 	public VaadinGraph(final CyNetwork network, final CyNetworkView finalView, final String title, final int width, final int height) {
@@ -161,8 +198,80 @@ public class VaadinGraph extends AbstractComponent {
 		this.finalView = finalView;
 		this.width = width;
 		this.height = height;
+		listeners = new ArrayList<GraphChangeListener>();
 		edges = network.getEdgeIndicesArray();
+		nodes = network.getNodeIndicesArray();
 		measureDimensions(finalView);
+	}
+
+	public CyNetwork getNetwork() {
+		return network;
+	}
+
+	public CyNetworkView getFinalView() {
+		return finalView;
+	}
+
+	public Set<String> getSelectedNodes() {
+		return selectedNodes;
+	}
+
+	public Set<String> getSelectedEdges() {
+		return selectedEdges;
+	}
+
+	public void addListener(final GraphChangeListener listener) {
+		listeners.add(listener);
+	}
+
+	public void setWidthAndHeight(final int width, final int height) {
+		this.width = width;
+		this.height = height;
+		requestRepaint();
+	}
+
+	public void setTextsVisible(final boolean b) {
+		textsVisible = b;
+		requestRepaint();
+	}
+
+	/**
+	 * Optimize styles to minimize client-server traffic
+	 * 
+	 * @param b
+	 */
+	public void setOptimizedStyles(final boolean b) {
+		styleOptimization = b;
+		requestRepaint();
+	}
+
+	public Container getNodeAttributeContainer(final Set<String> selectedNodes) {
+		final IndexedContainer container = new IndexedContainer();
+		container.addContainerProperty("index", Integer.class, null);
+		container.addContainerProperty("identifier", String.class, null);
+
+		for (final Integer nodeIndex : nodes) {
+			final Node n = network.getNode(nodeIndex);
+			for (final String str : selectedNodes) {
+				if (str.equals(n.getIdentifier())) {
+					final Item i = container.addItem(n);
+					i.getItemProperty("index").setValue(nodeIndex);
+					i.getItemProperty("identifier").setValue(str);
+					break;
+				}
+			}
+		}
+		return container;
+	}
+
+	private String getRGB(final Color bc) {
+		return "rgb(" + bc.getRed() + "," + bc.getGreen() + "," + bc.getBlue() + ")";
+	}
+
+	private void notifyListeners() {
+		for (final GraphChangeListener listener : listeners) {
+			listener.onGraphChange();
+		}
 	}
 
 	private void measureDimensions(final CyNetworkView finalView2) {
@@ -201,26 +310,5 @@ public class VaadinGraph extends AbstractComponent {
 		}
 		cytoscapeViewWidth = maxX - minX;
 		cytoscapeViewHeight = maxY - minY;
-	}
-
-	public void setWidthAndHeight(final int width, final int height) {
-		this.width = width;
-		this.height = height;
-		requestRepaint();
-	}
-
-	public void setTextsVisible(final boolean b) {
-		textsVisible = b;
-		requestRepaint();
-	}
-
-	/**
-	 * Optimize styles to minimize client-server traffic
-	 * 
-	 * @param b
-	 */
-	public void setOptimizedStyles(final boolean b) {
-		styleOptimization = b;
-		requestRepaint();
 	}
 }

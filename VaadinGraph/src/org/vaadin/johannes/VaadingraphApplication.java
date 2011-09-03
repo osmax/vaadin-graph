@@ -1,11 +1,21 @@
+/* 
+ * Copyright 2011 Johannes Tuikkala <johannes@vaadin.com>
+ *                           LICENCED UNDER
+ *                  GNU LESSER GENERAL PUBLIC LICENSE
+ *                     Version 3, 29 June 2007
+ */
 package org.vaadin.johannes;
 
+import java.util.Set;
+
+import org.vaadin.johannes.graph.GraphChangeListener;
 import org.vaadin.johannes.graph.VaadinGraph;
 
 import com.vaadin.Application;
 import com.vaadin.data.Item;
 import com.vaadin.data.Property;
 import com.vaadin.data.Property.ValueChangeEvent;
+import com.vaadin.ui.AbstractSelect;
 import com.vaadin.ui.Alignment;
 import com.vaadin.ui.Button.ClickEvent;
 import com.vaadin.ui.CheckBox;
@@ -13,6 +23,7 @@ import com.vaadin.ui.Component;
 import com.vaadin.ui.HorizontalLayout;
 import com.vaadin.ui.Label;
 import com.vaadin.ui.NativeSelect;
+import com.vaadin.ui.Table;
 import com.vaadin.ui.VerticalLayout;
 import com.vaadin.ui.Window;
 
@@ -29,10 +40,10 @@ import cytoscape.layout.algorithms.GridNodeLayout;
 import cytoscape.visual.VisualMappingManager;
 import cytoscape.visual.VisualPropertyType;
 
-public class VaadingraphApplication extends Application {
+public class VaadingraphApplication extends Application implements GraphChangeListener {
 
 	private static final long serialVersionUID = 8397288032426120704L;
-	private static final int HEIGHT = 600;
+	private static final int HEIGHT = 450;
 	private static final int WIDTH = 800;
 
 	private NativeSelect networkSelect;
@@ -50,6 +61,7 @@ public class VaadingraphApplication extends Application {
 	transient private CyNetwork net;
 	private NativeSelect sessionSelect;
 	private HorizontalLayout hl, hl2;
+	private Table selectedNodesTables;
 
 	static {
 		final CytoscapeInit init = new CytoscapeInit();
@@ -59,7 +71,6 @@ public class VaadingraphApplication extends Application {
 	@Override
 	public void init() {
 		path = getProperty("sifpath");
-		System.out.println(path);
 		fileName = path + "sample.sif";
 
 		mainWindow = new Window("Vaadingraph Application");
@@ -82,16 +93,44 @@ public class VaadingraphApplication extends Application {
 		hl.setComponentAlignment(cb2, Alignment.BOTTOM_LEFT);
 
 		graph = getNetworkGraph(WIDTH, HEIGHT);
+		graph.addListener(this);
 		mainLayout.addComponent(hl2 = new HorizontalLayout());
+		mainLayout.addComponent(getAttributeBrowser(graph));
 		hl2.addComponent(graph);
 		hl2.addComponent(getInfoLabel());
 		setMainWindow(mainWindow);
 	}
 
+	private Component getAttributeBrowser(final VaadinGraph graph) {
+		final Set<String> selectedNodes = graph.getSelectedNodes();
+		selectedNodesTables = new Table();
+		selectedNodesTables.setItemCaptionMode(AbstractSelect.ITEM_CAPTION_MODE_PROPERTY);
+		selectedNodesTables.setCaption("Selected Nodes");
+		selectedNodesTables.setWidth(WIDTH + "px");
+		selectedNodesTables.setPageLength(4);
+		selectedNodesTables.setImmediate(true);
+		selectedNodesTables.setContainerDataSource(graph.getNodeAttributeContainer(selectedNodes));
+		return selectedNodesTables;
+	}
+
+	public void onGraphChange() {
+		final Set<String> selectedNodes = graph.getSelectedNodes();
+		selectedNodesTables.setContainerDataSource(graph.getNodeAttributeContainer(selectedNodes));
+	}
+
 	private Component getInfoLabel() {
-		return new Label(
-				"<h2><h3 style=\"color:red;\">Cytographer main features</h3><ul><li>No Flash or browser plugins needed!</li><li>Drag and drop move nodes</li><li>Drag and drop move whole graph</li><li>Mouse wheel zoom</li><li>Node selection and deselection by mouse click</li><li>Generic or node specific styles (see the difference e.g. in the &quot;galFiltered&quot; session file)</li></ul></h2>",
+		final VerticalLayout vlo = new VerticalLayout();
+		final Label l1 = new Label(
+				"<h2><h3 style=\"color:red;\">Cytographer main features</h3><ul><li>No Flash or browser plugins needed!</li><li>Drag and drop move nodes</li><li>Drag and drop move whole graph</li><li>Mouse wheel zoom</li><li>Node selection and deselection by mouse click</li><li>Generic or node specific styles (see the difference e.g. in the &quot;galFiltered&quot; session file)</li><li>Click and drag selection box</li></ul></h2>",
 				Label.CONTENT_XHTML);
+
+		final Label l2 = new Label(
+				"<h2><h3 style=\"color:green;\">Features in the TODO stage</h3><ul><li>Deleting selected nodes by Delete key</li><li>Double click node creation</li><li>CTRL click node linking</li><li>Finalizing the mouse wheel + CTRL rotation</li><li>Node/edge attribute browsing</li><li>Touch support</li><li>...</li></ul></h2>",
+				Label.CONTENT_XHTML);
+
+		vlo.addComponent(l1);
+		vlo.addComponent(l2);
+		return vlo;
 	}
 
 	private Component getStyleOptimizedBox() {
@@ -285,9 +324,6 @@ public class VaadingraphApplication extends Application {
 				} else if (fileName.endsWith(".gml")) {
 					net = Cytoscape.createNetworkFromFile(fileName);
 					view = (DingNetworkView) Cytoscape.createNetworkView(net);
-					// final GMLReader reader = new GMLReader(fileName);
-					// net = Cytoscape.createNetwork(reader, true, null);
-					// reader.get
 				}
 			} else {
 				Cytoscape.createNewSession();

@@ -1,3 +1,9 @@
+/* 
+ * Copyright 2011 Johannes Tuikkala <johannes@vaadin.com>
+ *                           LICENCED UNDER
+ *                  GNU LESSER GENERAL PUBLIC LICENSE
+ *                     Version 3, 29 June 2007
+ */
 package org.vaadin.johannes.graph.client.ui;
 
 import org.vaadin.gwtgraphics.client.Group;
@@ -12,6 +18,7 @@ public class VNode extends Group implements Positionable {
 	private final Text text;
 	private final String name;
 	private boolean textsVisible = true;
+	private String originalFillColor;
 
 	public VNode(final Shape view, final String name) {
 		super();
@@ -82,5 +89,18 @@ public class VNode extends Group implements Positionable {
 			add(text);
 		}
 		textsVisible = visible;
+	}
+
+	public String getOriginalFillColor() {
+		return originalFillColor;
+	}
+
+	public void setOriginalFillColor(final String originalFillColor) {
+		this.originalFillColor = originalFillColor;
+	}
+
+	@Override
+	public String toString() {
+		return name;
 	}
 }
