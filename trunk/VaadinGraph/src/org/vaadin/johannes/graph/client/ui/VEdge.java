@@ -8,6 +8,7 @@ public class VEdge extends Line {
 	private final VNode node1;
 	private final VNode node2;
 	private final Shape text;
+	private String originalStrokeColor;
 
 	public VEdge(final VNode node1, final VNode node2, final Shape text) {
 		super(node1.getX(), node1.getY(), node2.getX(), node2.getY());
@@ -28,4 +29,20 @@ public class VEdge extends Line {
 		return text;
 	}
 
+	public String getOrginalStrokeColor() {
+		return getOriginalStrokeColor();
+	}
+
+	public void setOriginalStrokeColor(final String originalStrokeColor) {
+		this.originalStrokeColor = originalStrokeColor;
+	}
+
+	public String getOriginalStrokeColor() {
+		return originalStrokeColor;
+	}
+
+	@Override
+	public String toString() {
+		return text.getTitle();
+	}
 }
