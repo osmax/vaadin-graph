@@ -47,7 +47,7 @@ public class VNode extends Group implements ContextListener, Positionable, Mouse
 		this.graph = graph;
 		this.view = view;
 		this.name = name;
-		text = new Text(view.getX(), view.getY(), name);
+		text = new Text(view.getX() - view.getOffsetWidth() + 1, view.getY() + view.getOffsetHeight() / 2, name);
 		text.setStrokeOpacity(0);
 		add(view);
 		add(text);
@@ -204,8 +204,12 @@ public class VNode extends Group implements ContextListener, Positionable, Mouse
 
 	@Override
 	public void onClick(final ClickEvent event) {
-		graph.setNodeSelected((VNode) event.getSource(), !graph.getSelectedShapes().contains(event.getSource()));
-		cytographer.nodeOrEdgeSelectionChanged();
+		if (cytographer.isOnLink()) {
+			cytographer.constructLinkTo(this);
+		} else {
+			graph.setNodeSelected((VNode) event.getSource(), !graph.getSelectedShapes().contains(event.getSource()));
+			cytographer.nodeOrEdgeSelectionChanged();
+		}
 	}
 
 	@Override
@@ -244,7 +248,7 @@ public class VNode extends Group implements ContextListener, Positionable, Mouse
 			@Override
 			public void execute() {
 				super.execute();
-				cytographer.linkNode(VNode.this);
+				cytographer.startLinkingFrom(VNode.this);
 			}
 		};
 		final Command delCommand = menu.new ContextMenuCommand() {

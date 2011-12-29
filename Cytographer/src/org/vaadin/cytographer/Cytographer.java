@@ -1,7 +1,5 @@
 package org.vaadin.cytographer;
 
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Map;
 
 import com.vaadin.data.Container;
@@ -27,7 +25,6 @@ public class Cytographer extends AbstractComponent {
 
 	private final GraphProperties graphProperties;
 	private final PaintController ctrl = new PaintController();
-	private final List<GraphChangeListener> listeners;
 
 	private String updatedNode;
 
@@ -74,7 +71,6 @@ public class Cytographer extends AbstractComponent {
 			for (final String str : strs) {
 				graphProperties.addSelectedEdge(str);
 			}
-			notifyListeners();
 			System.out.printf("Selected %d edges\n", graphProperties.getSelectedEdges().size());
 		}
 		if (variables.containsKey("selectedNodes")) {
@@ -83,7 +79,6 @@ public class Cytographer extends AbstractComponent {
 			for (final String str : strs) {
 				graphProperties.addSelectedNode(str);
 			}
-			notifyListeners();
 			System.out.printf("Selected %d nodes\n", graphProperties.getSelectedNodes().size());
 		}
 		if (variables.containsKey("zoomFactor")) {
@@ -105,11 +100,6 @@ public class Cytographer extends AbstractComponent {
 		graphProperties = new GraphProperties(network, finalView, title);
 		graphProperties.setWidth(width);
 		graphProperties.setHeight(height);
-		listeners = new ArrayList<GraphChangeListener>();
-	}
-
-	public void addListener(final GraphChangeListener listener) {
-		listeners.add(listener);
 	}
 
 	public void setWidthAndHeight(final int width, final int height) {
@@ -144,22 +134,19 @@ public class Cytographer extends AbstractComponent {
 	 * Change node size
 	 * 
 	 * @param nodeSize
+	 * @param repaint
 	 */
-	public void setNodeSize(final double nodeSize) {
-		currentOperation = GraphOperation.SET_NODE_SIZE;
+	public void setNodeSize(final double nodeSize, final boolean repaint) {
 		graphProperties.setNodeSize(nodeSize);
-		requestRepaint();
-	}
-
-	@Override
-	public void requestRepaint() {
-		super.requestRepaint();
-	}
-
-	private void notifyListeners() {
-		for (final GraphChangeListener listener : listeners) {
-			listener.onGraphChange();
+		if (repaint) {
+			currentOperation = GraphOperation.SET_NODE_SIZE;
+			requestRepaint();
 		}
+	}
+
+	public void repaintGraph() {
+		currentOperation = GraphOperation.REPAINT;
+		requestRepaint();
 	}
 
 	public void setTextsVisible(final boolean b) {

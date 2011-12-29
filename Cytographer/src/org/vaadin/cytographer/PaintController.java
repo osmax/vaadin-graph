@@ -4,6 +4,8 @@ import giny.model.Edge;
 import giny.model.Node;
 
 import java.awt.Color;
+import java.util.HashSet;
+import java.util.Set;
 
 import com.vaadin.terminal.PaintException;
 import com.vaadin.terminal.PaintTarget;
@@ -18,7 +20,10 @@ import cytoscape.visual.VisualStyle;
 
 public class PaintController {
 
+	private Set<Integer> paintedNodes = new HashSet<Integer>();
+
 	public void repaintGraph(final PaintTarget target, final GraphProperties gp) throws PaintException {
+		paintedNodes = new HashSet<Integer>();
 		target.addAttribute("title", gp.getTitle());
 		target.addAttribute("gwidth", gp.getWidth());
 		target.addAttribute("gheight", gp.getHeight());
@@ -34,9 +39,13 @@ public class PaintController {
 		final Color elc = (Color) vs.getNodeAppearanceCalculator().getDefaultAppearance().get(VisualPropertyType.EDGE_LABEL_COLOR);
 		final Number elw = (Number) vs.getEdgeAppearanceCalculator().getDefaultAppearance().get(VisualPropertyType.EDGE_LINE_WIDTH);
 		final Number nbw = (Number) vs.getNodeAppearanceCalculator().getDefaultAppearance().get(VisualPropertyType.NODE_LINE_WIDTH);
-		final Number ns = (Number) vs.getNodeAppearanceCalculator().getDefaultAppearance().get(VisualPropertyType.NODE_SIZE);
 		final Number efs = (Number) vs.getNodeAppearanceCalculator().getDefaultAppearance().get(VisualPropertyType.EDGE_FONT_SIZE);
 		final Number nfs = (Number) vs.getNodeAppearanceCalculator().getDefaultAppearance().get(VisualPropertyType.NODE_FONT_SIZE);
+
+		Number ns = (Number) vs.getNodeAppearanceCalculator().getDefaultAppearance().get(VisualPropertyType.NODE_SIZE);
+		if (gp.getNodeSize() > 0) {
+			ns = gp.getNodeSize();
+		}
 
 		final Color bc = vs.getGlobalAppearanceCalculator().getDefaultBackgroundColor();
 		final Color nsc = vs.getGlobalAppearanceCalculator().getDefaultNodeSelectionColor();
@@ -60,6 +69,9 @@ public class PaintController {
 			final Edge e = gp.getNetwork().getEdge(ei);
 			final Node node1 = e.getSource();
 			final Node node2 = e.getTarget();
+			paintedNodes.add(node1.getRootGraphIndex());
+			paintedNodes.add(node2.getRootGraphIndex());
+
 			target.startTag("e");
 			target.addAttribute("name", e.getIdentifier());
 			target.addAttribute("node1", node1.getIdentifier());
@@ -98,15 +110,45 @@ public class PaintController {
 				target.addAttribute("_n1bc", getRGB((Color) n1a.get(VisualPropertyType.NODE_BORDER_COLOR)));
 				target.addAttribute("_n1fc", getRGB((Color) n1a.get(VisualPropertyType.NODE_FILL_COLOR)));
 				target.addAttribute("_n1bw", ((Number) n1a.get(VisualPropertyType.NODE_LINE_WIDTH)).intValue());
-				target.addAttribute("_n1s", ((Number) n1a.get(VisualPropertyType.NODE_SIZE)).intValue());
+				if (gp.getNodeSize() > 0) {
+					target.addAttribute("_n1s", ns.intValue());
+				} else {
+					target.addAttribute("_n1s", ((Number) n1a.get(VisualPropertyType.NODE_SIZE)).intValue());
+				}
 
 				target.addAttribute("_n2bc", getRGB((Color) n2a.get(VisualPropertyType.NODE_BORDER_COLOR)));
 				target.addAttribute("_n2fc", getRGB((Color) n2a.get(VisualPropertyType.NODE_FILL_COLOR)));
 				target.addAttribute("_n2bw", ((Number) n2a.get(VisualPropertyType.NODE_LINE_WIDTH)).intValue());
 				target.addAttribute("_n2s", ((Number) n2a.get(VisualPropertyType.NODE_SIZE)).intValue());
 			}
-
 			target.endTag("e");
+		}
+		// paint also single nodes
+		for (final int nodeIndex : gp.getNodes()) {
+			final Node node1 = gp.getNetwork().getNode(nodeIndex);
+			if (!paintedNodes.contains(node1.getRootGraphIndex())) {
+				target.startTag("n");
+				target.addAttribute("node1", node1.getIdentifier());
+				final double xx1 = gp.getFinalView().getNodeView(node1).getXPosition();
+				final double yy1 = gp.getFinalView().getNodeView(node1).getYPosition();
+				final int x1 = (int) xx1;
+				final int y1 = (int) yy1;
+				target.addAttribute("node1x", x1);
+				target.addAttribute("node1y", y1);
+				if (!gp.isStyleOptimization()) {
+					final NodeAppearance n1a = vs.getNodeAppearanceCalculator().calculateNodeAppearance(node1, gp.getNetwork());
+
+					target.addAttribute("_n1bc", getRGB((Color) n1a.get(VisualPropertyType.NODE_BORDER_COLOR)));
+					target.addAttribute("_n1fc", getRGB((Color) n1a.get(VisualPropertyType.NODE_FILL_COLOR)));
+					target.addAttribute("_n1bw", ((Number) n1a.get(VisualPropertyType.NODE_LINE_WIDTH)).intValue());
+					if (gp.getNodeSize() > 0) {
+						target.addAttribute("_n1s", ns.intValue());
+					} else {
+						target.addAttribute("_n1s", ((Number) n1a.get(VisualPropertyType.NODE_SIZE)).intValue());
+					}
+				}
+				target.endTag("n");
+			}
 		}
 	}
 
