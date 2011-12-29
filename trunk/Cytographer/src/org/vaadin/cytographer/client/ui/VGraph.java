@@ -60,34 +60,21 @@ public class VGraph extends VectorObject {
 
 			VNode node1 = nodes.get(node1name);
 			VNode node2 = nodes.get(node2name);
-			if (node1 == null) {
+			if (node1 == null && node1name != null) {
 				node1 = VNode.createANode(child, cytographer, this, node1name, true, style);
 				updateEdges(node1, false);
 				nodes.put(node1name, node1);
 			}
-			if (node2 == null) {
+			if (node2 == null && node2name != null) {
 				node2 = VNode.createANode(child, cytographer, this, node2name, false, style);
 				updateEdges(node2, false);
 				nodes.put(node2name, node2);
 			}
-			final VEdge edge = VEdge.createAnEdge(child, cytographer, this, name, node1, node2, style);
-			Set<VEdge> edgs = shapeToEdgesMap.get(node1);
-			if (edgs == null) {
-				edgs = new HashSet<VEdge>();
-				edgs.add(edge);
-				shapeToEdgesMap.put(node1, edgs);
-			} else {
-				edgs.add(edge);
+			if (node1 != null && node2 != null) {
+				final VEdge edge = VEdge.createAnEdge(child, cytographer, this, name, node1, node2, style);
+				createEdgeConnections(edge);
+				edges.put(name, edge);
 			}
-			edgs = shapeToEdgesMap.get(node2);
-			if (edgs == null) {
-				edgs = new HashSet<VEdge>();
-				edgs.add(edge);
-				shapeToEdgesMap.put(node2, edgs);
-			} else {
-				edgs.add(edge);
-			}
-			edges.put(name, edge);
 		}
 	}
 
@@ -259,9 +246,35 @@ public class VGraph extends VectorObject {
 		return movedShape;
 	}
 
+	public void addNode(final VNode node) {
+		canvas.add(node);
+		paintedShapes.add(node);
+	}
+
 	public void addEdge(final VEdge edge) {
 		canvas.add(edge);
+		createEdgeConnections(edge);
 		edges.put(edge.getName(), edge);
+	}
+
+	private void createEdgeConnections(final VEdge edge) {
+		Set<VEdge> edgs1 = shapeToEdgesMap.get(edge.getFirstNode());
+		if (edgs1 == null) {
+			edgs1 = new HashSet<VEdge>();
+			edgs1.add(edge);
+			shapeToEdgesMap.put(edge.getFirstNode(), edgs1);
+		} else {
+			edgs1.add(edge);
+		}
+
+		Set<VEdge> edgs2 = shapeToEdgesMap.get(edge.getSecondNode());
+		if (edgs2 == null) {
+			edgs2 = new HashSet<VEdge>();
+			edgs2.add(edge);
+			shapeToEdgesMap.put(edge.getSecondNode(), edgs2);
+		} else {
+			edgs2.add(edge);
+		}
 	}
 
 	public void removeNode(final VNode node) {
@@ -274,7 +287,7 @@ public class VGraph extends VectorObject {
 
 		final Set<VEdge> edgs = shapeToEdgesMap.get(node);
 		for (final VEdge edge : edgs) {
-			if (edges.remove(edge.toString()) == null) {
+			if (edges.remove(edge.getName()) == null) {
 				VConsole.log("edge not found " + edge.toString());
 			}
 			canvas.remove(edge);

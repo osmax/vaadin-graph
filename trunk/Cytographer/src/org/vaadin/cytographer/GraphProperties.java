@@ -36,7 +36,7 @@ public class GraphProperties {
 	private int cytoscapeViewWidth;
 	private int cytoscapeViewHeight;
 	private float zoomFactor = 1;
-	private double nodeSize;
+	private double nodeSize = -1;
 
 	private int maxX = Integer.MIN_VALUE;
 	private int minX = Integer.MAX_VALUE;

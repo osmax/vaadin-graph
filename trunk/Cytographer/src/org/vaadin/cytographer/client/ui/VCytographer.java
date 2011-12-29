@@ -67,6 +67,7 @@ public class VCytographer extends Composite implements Paintable, ClickHandler, 
 	private float zoomFactor = 1;
 	private boolean onMove = false;
 	private boolean onLink = false;
+
 	private final boolean showInfo = true;
 
 	private Set<Integer> currentKeyModifiers;
@@ -108,16 +109,10 @@ public class VCytographer extends Composite implements Paintable, ClickHandler, 
 		this.client = client;
 		paintableId = uidl.getId();
 		currentKeyModifiers = new HashSet<Integer>();
-		selectionBox.setSelectionBoxVisible(false);
-
-		graphWidth = uidl.getIntAttribute("gwidth");
-		graphHeight = uidl.getIntAttribute("gheight");
-		style.parseGeneralStyleAttributesFromUidl(uidl);
-		initializeCanvas();
-
 		final String operation = uidl.getStringAttribute("operation");
+
 		if ("REPAINT".equals(operation)) {
-			graph.repaintGraph(uidl);
+			repaint(uidl);
 		} else if ("SET_NODE_SIZE".equals(operation)) {
 			style.setNodeSize(uidl.getIntAttribute("ns") / 2);
 			graph.updateGraphProperties(style);
@@ -134,8 +129,16 @@ public class VCytographer extends Composite implements Paintable, ClickHandler, 
 		} else if ("UPDATE_NODE".equals(operation)) {
 			graph.updateNode(uidl, uidl.getStringAttribute("node"));
 		} else {
-			graph.repaintGraph(uidl);
+			repaint(uidl);
 		}
+	}
+
+	private void repaint(final UIDL uidl) {
+		graphWidth = uidl.getIntAttribute("gwidth");
+		graphHeight = uidl.getIntAttribute("gheight");
+		style.parseGeneralStyleAttributesFromUidl(uidl);
+		initializeCanvas();
+		graph.repaintGraph(uidl);
 	}
 
 	private void initializeCanvas() {
@@ -144,12 +147,12 @@ public class VCytographer extends Composite implements Paintable, ClickHandler, 
 		canvas.setHeight(graphHeight);
 		canvas.getElement().getStyle().setPropertyPx("width", graphWidth);
 		canvas.getElement().getStyle().setPropertyPx("height", graphHeight);
+		canvas.addMouseMoveHandler(this);
+		canvas.addDoubleClickHandler(this);
 		canvas.addMouseUpHandler(this);
 		canvas.addMouseDownHandler(this);
-		canvas.addMouseMoveHandler(this);
 		canvas.addClickHandler(this);
 		canvas.addMouseWheelHandler(this);
-		canvas.addDoubleClickHandler(this);
 	}
 
 	private void paintGraph() {
@@ -272,10 +275,12 @@ public class VCytographer extends Composite implements Paintable, ClickHandler, 
 	}
 
 	private void removeSelectionBox() {
-		canvas.remove(selectionBox);
-		selectionBox.setSelectionBoxVisible(false);
-		VConsole.log("selection box removed from canvas");
-		selectionBox.setSelectionBoxRightHandSide(true);
+		if (selectionBox.isSelectionBoxVisible()) {
+			canvas.remove(selectionBox);
+			selectionBox.setSelectionBoxVisible(false);
+			VConsole.log("selection box removed from canvas");
+			selectionBox.setSelectionBoxRightHandSide(true);
+		}
 	}
 
 	private Line getLinkLine(final int x, final int y) {
@@ -296,15 +301,6 @@ public class VCytographer extends Composite implements Paintable, ClickHandler, 
 	@Override
 	public void onClick(final ClickEvent event) {
 		VConsole.log("onClick");
-		if (onLink) {
-			if (event.getSource() instanceof VNode) {
-				final VNode node2 = (VNode) event.getSource();
-				client.updateVariable(paintableId, "edgeCreated", new String[] { linkNode.getName(), node2.getName() }, true);
-				final String name = linkNode.getName() + "_to_" + node2.getName() + "_" + new Random().nextInt(1000);
-				final VEdge edge = VEdge.createAnEdge(null, this, graph, name, linkNode, node2, style);
-				graph.addEdge(edge);
-			}
-		}
 		removeLinkLine();
 		onMove = false;
 		removeMenu();
@@ -374,7 +370,7 @@ public class VCytographer extends Composite implements Paintable, ClickHandler, 
 			graph.updateEdges(n, false);
 		}
 		zoomFactor += delta;
-		client.updateVariable(paintableId, "zoomFactor", zoomFactor, false);
+		client.updateVariable(paintableId, "zoomFactor", zoomFactor, true);
 	}
 
 	@Override
@@ -393,10 +389,12 @@ public class VCytographer extends Composite implements Paintable, ClickHandler, 
 
 	@Override
 	public void onDoubleClick(final DoubleClickEvent event) {
+		VConsole.log("onDoubleClick");
 		final int x = event.getX();
 		final int y = event.getY();
 		final VNode node = VNode.createANode(x, y, this, graph, style);
-		client.updateVariable(paintableId, "createdANode", new Object[] { node.getName(), x, y }, false);
+		graph.addNode(node);
+		client.updateVariable(paintableId, "createdANode", new Object[] { node.getName(), x, y }, true);
 	}
 
 	public void removeMenu() {
@@ -419,7 +417,7 @@ public class VCytographer extends Composite implements Paintable, ClickHandler, 
 
 	}
 
-	public void linkNode(final VNode node) {
+	public void startLinkingFrom(final VNode node) {
 		VConsole.log("onlink");
 		onLink = true;
 		linkNode = node;
@@ -427,8 +425,20 @@ public class VCytographer extends Composite implements Paintable, ClickHandler, 
 		startY = node.getY();
 	}
 
+	public void constructLinkTo(final VNode node2) {
+		VConsole.log("linked");
+		final String name = linkNode.getName() + "_to_" + node2.getName() + "_" + new Random().nextInt(1000);
+		final VEdge edge = VEdge.createAnEdge(null, this, graph, name, linkNode, node2, style);
+		client.updateVariable(paintableId, "edgeCreated", new String[] { linkNode.getName(), node2.getName(), name }, true);
+		graph.addEdge(edge);
+	}
+
 	public void deleteNode(final VNode node) {
 		client.updateVariable(paintableId, "removedNode", node.getName(), true);
 		graph.removeNode(node);
+	}
+
+	public boolean isOnLink() {
+		return onLink;
 	}
 }
