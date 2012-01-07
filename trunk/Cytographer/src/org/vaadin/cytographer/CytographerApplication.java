@@ -6,6 +6,8 @@
  */
 package org.vaadin.cytographer;
 
+import org.vaadin.cytographer.ctrl.CytographerController;
+
 import com.vaadin.Application;
 import com.vaadin.ui.Component;
 import com.vaadin.ui.HorizontalLayout;
@@ -55,15 +57,10 @@ public class CytographerApplication extends Application {
 	private Component getInfoLabel() {
 		final VerticalLayout vlo = new VerticalLayout();
 		final Label l1 = new Label(
-				"<h2><h3 style=\"color:red;\">Cytographer main features</h3><ul><li>No Flash or browser plugins needed!</li><li>Drag and drop move nodes</li><li>Drag and drop move whole graph</li><li>Mouse wheel zoom</li><li>Node selection and deselection by mouse click</li><li>Generic or node specific styles (see the difference e.g. in the &quot;galFiltered&quot; session file)</li><li>Click and drag selection box</li></ul></h2>",
-				Label.CONTENT_XHTML);
-
-		final Label l2 = new Label(
-				"<h2><h3 style=\"color:green;\">Features in the TODO stage</h3><ul><li>Optimizing the graph drawing for big graphs</li><li>Deleting selected nodes by Delete key</li><li>Double click node creation</li><li>CTRL click node linking</li><li>Finalizing the mouse wheel + CTRL rotation</li><li>Node/edge attribute browsing</li><li>Touch support</li><li>...</li></ul></h2>",
+				"<h2><h3 style=\"color:red;\">Cytographer main features</h3><ul><li>No Flash or browser plugins needed!</li><li>Drag and drop move nodes</li><li>Drag and drop move whole graph</li><li>Mouse wheel zoom</li><li>Node selection and deselection by mouse click</li><li>Generic or node specific styles</li><li>Ctrl-click and drag selection box</li><li>Right click context menu for node linking and deletion</li><li>Double click node creation</li></ul></h2>",
 				Label.CONTENT_XHTML);
 
 		vlo.addComponent(l1);
-		vlo.addComponent(l2);
 		return vlo;
 	}
 

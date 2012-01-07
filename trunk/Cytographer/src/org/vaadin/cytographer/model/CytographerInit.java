@@ -1,4 +1,4 @@
-package org.vaadin.cytographer;
+package org.vaadin.cytographer.model;
 
 import java.util.ArrayList;
 import java.util.List;

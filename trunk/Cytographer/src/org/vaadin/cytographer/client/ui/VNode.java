@@ -225,7 +225,7 @@ public class VNode extends Group implements ContextListener, Positionable, Mouse
 	public void onMouseDown(final MouseDownEvent event) {
 		if (event.getNativeEvent().getButton() == NativeEvent.BUTTON_RIGHT) {
 			VConsole.log("rightClick");
-			final ContextMenu menu = new ContextMenu(VNode.this);
+			final VContextMenu menu = new VContextMenu(VNode.this);
 			menu.showMenu(event.getClientX(), event.getClientY());
 			cytographer.setCurrentMenu(menu);
 		} else {
@@ -235,7 +235,7 @@ public class VNode extends Group implements ContextListener, Positionable, Mouse
 	}
 
 	@Override
-	public void initCommands(final ContextMenu menu) {
+	public void initCommands(final VContextMenu menu) {
 		commandMap = new HashMap<String, Command>();
 		final Command editCommand = menu.new ContextMenuCommand() {
 			@Override
@@ -255,17 +255,17 @@ public class VNode extends Group implements ContextListener, Positionable, Mouse
 			@Override
 			public void execute() {
 				super.execute();
-				cytographer.deleteNode(VNode.this);
+				cytographer.deleteNode(VNode.this, true);
 			}
 		};
-		commandMap.put("Edit", editCommand);
+		// commandMap.put("Edit", editCommand);
 		commandMap.put("Link to", linkCommand);
 		commandMap.put("Delete", delCommand);
 	}
 
 	@Override
 	public Command[] getCommands() {
-		return commandMap.values().toArray(new Command[3]);
+		return commandMap.values().toArray(new Command[2]);
 	}
 
 	@Override

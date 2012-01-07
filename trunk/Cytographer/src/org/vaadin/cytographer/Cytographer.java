@@ -2,6 +2,9 @@ package org.vaadin.cytographer;
 
 import java.util.Map;
 
+import org.vaadin.cytographer.ctrl.PaintController;
+import org.vaadin.cytographer.model.GraphProperties;
+
 import com.vaadin.data.Container;
 import com.vaadin.terminal.PaintException;
 import com.vaadin.terminal.PaintTarget;
@@ -55,6 +58,7 @@ public class Cytographer extends AbstractComponent {
 			;
 		}
 		currentOperation = GraphOperation.REPAINT;
+		graphProperties.setFitting(false);
 	}
 
 	/**
@@ -93,6 +97,9 @@ public class Cytographer extends AbstractComponent {
 		}
 		if (variables.containsKey("edgeCreated")) {
 			graphProperties.createAnEdge((String[]) variables.get("edgeCreated"));
+		}
+		if (variables.containsKey("removedEdge")) {
+			graphProperties.removeEdge((String) variables.get("removedEdge"));
 		}
 	}
 
@@ -161,5 +168,16 @@ public class Cytographer extends AbstractComponent {
 
 	public Container getNodeAttributeContainerForSelectedNodes() {
 		return graphProperties.getNodeAttributeContainerForSelectedNodes();
+	}
+
+	public void fitToView() {
+		graphProperties.measureDimensions();
+		graphProperties.setFitting(true);
+		currentOperation = GraphOperation.REPAINT;
+		requestRepaint();
+	}
+
+	public boolean isTextsVisible() {
+		return graphProperties.isTextsVisible();
 	}
 }

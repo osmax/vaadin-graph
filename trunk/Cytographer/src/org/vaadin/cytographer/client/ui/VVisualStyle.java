@@ -13,6 +13,7 @@ public class VVisualStyle {
 	private String nodeLabelColor;
 	private String edgeLabelColor;
 	private String fontFamily = "Times New Roman Regular";
+	private String edgeDashArray;
 
 	private int edgeLineWidth;
 	private int nodeBorderWidth;
@@ -37,6 +38,7 @@ public class VVisualStyle {
 		edgeLabelColor = uidl.getStringAttribute("elc");
 		nodeFontSize = uidl.getIntAttribute("nfs");
 		edgeFontSize = uidl.getIntAttribute("efs");
+		edgeDashArray = uidl.getStringAttribute("eda");
 	}
 
 	public String getBgColor() {
@@ -157,5 +159,13 @@ public class VVisualStyle {
 
 	public void setTextsVisible(final boolean textsVisible) {
 		this.textsVisible = textsVisible;
+	}
+
+	public void setEdgeDashArray(final String edgeDashArray) {
+		this.edgeDashArray = edgeDashArray;
+	}
+
+	public String getEdgeDashArray() {
+		return edgeDashArray;
 	}
 }

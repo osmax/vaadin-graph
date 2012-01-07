@@ -3,14 +3,13 @@ package org.vaadin.cytographer.client.ui;
 import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.Event;
 import com.google.gwt.user.client.ui.MenuBar;
-import com.google.gwt.user.client.ui.MenuItem;
 import com.google.gwt.user.client.ui.PopupPanel;
 
-public class ContextMenu extends PopupPanel {
+public class VContextMenu extends PopupPanel {
 
 	private final ContextListener listener;
 
-	public ContextMenu(final ContextListener listener) {
+	public VContextMenu(final ContextListener listener) {
 		super();
 		this.listener = listener;
 		this.listener.initCommands(this);
@@ -21,7 +20,7 @@ public class ContextMenu extends PopupPanel {
 	public void showMenu(final int x, final int y) {
 		final MenuBar contextMenu = new MenuBar(true);
 		for (final Command command : listener.getCommands()) {
-			final MenuItem commandItem = new MenuItem(listener.getCommandName(command), true, command);
+			final VContextMenuItem commandItem = new VContextMenuItem(listener.getCommandName(command), true, command);
 			contextMenu.addItem(commandItem);
 		}
 
@@ -35,7 +34,7 @@ public class ContextMenu extends PopupPanel {
 
 		@Override
 		public void execute() {
-			ContextMenu.this.hide();
+			VContextMenu.this.hide();
 		}
 
 	}

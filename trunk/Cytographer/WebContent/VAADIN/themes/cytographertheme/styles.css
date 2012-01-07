@@ -8,3 +8,12 @@
     line-height            :    normal;
     margin                 :    2px;
 }
+
+
+.gwt-MenuItem {
+	font-weight            :	normal;
+}
+
+.gwt-MenuItem .mouseover {
+	font-weight            :	bold;
+}

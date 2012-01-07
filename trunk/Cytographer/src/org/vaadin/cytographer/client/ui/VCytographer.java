@@ -50,14 +50,14 @@ public class VCytographer extends Composite implements Paintable, ClickHandler, 
 
 	private final VGraph graph;
 	private final FocusPanel panel;
-	private final FocusDrawingArea canvas;
+	private final VFocusDrawingArea canvas;
 	private final VVisualStyle style = new VVisualStyle();
 	private final VSelectionBox selectionBox = new VSelectionBox();
 
 	private Line linkLine;
 	private VNode linkNode;
 	private VectorObject info;
-	private ContextMenu currentMenu;
+	private VContextMenu currentMenu;
 
 	private int startY;
 	private int startX;
@@ -81,9 +81,15 @@ public class VCytographer extends Composite implements Paintable, ClickHandler, 
 		panel.setSize(graphWidth + "px", graphHeight + "px");
 		panel.addKeyDownHandler(this);
 		panel.addKeyUpHandler(this);
-		canvas = new FocusDrawingArea(graphWidth, graphHeight);
+		canvas = new VFocusDrawingArea(this, graphWidth, graphHeight);
 		canvas.addKeyDownHandler(this);
 		canvas.addKeyUpHandler(this);
+		canvas.addMouseMoveHandler(this);
+		canvas.addDoubleClickHandler(this);
+		canvas.addMouseUpHandler(this);
+		canvas.addMouseDownHandler(this);
+		canvas.addClickHandler(this);
+		canvas.addMouseWheelHandler(this);
 		graph = new VGraph(this, style, canvas, graphWidth, graphHeight);
 		panel.add(canvas);
 		canvas.add(graph);
@@ -147,12 +153,6 @@ public class VCytographer extends Composite implements Paintable, ClickHandler, 
 		canvas.setHeight(graphHeight);
 		canvas.getElement().getStyle().setPropertyPx("width", graphWidth);
 		canvas.getElement().getStyle().setPropertyPx("height", graphHeight);
-		canvas.addMouseMoveHandler(this);
-		canvas.addDoubleClickHandler(this);
-		canvas.addMouseUpHandler(this);
-		canvas.addMouseDownHandler(this);
-		canvas.addClickHandler(this);
-		canvas.addMouseWheelHandler(this);
 	}
 
 	private void paintGraph() {
@@ -404,11 +404,11 @@ public class VCytographer extends Composite implements Paintable, ClickHandler, 
 		}
 	}
 
-	public void setCurrentMenu(final ContextMenu currentMenu) {
+	public void setCurrentMenu(final VContextMenu currentMenu) {
 		this.currentMenu = currentMenu;
 	}
 
-	public ContextMenu getCurrentMenu() {
+	public VContextMenu getCurrentMenu() {
 		return currentMenu;
 	}
 
@@ -433,12 +433,27 @@ public class VCytographer extends Composite implements Paintable, ClickHandler, 
 		graph.addEdge(edge);
 	}
 
-	public void deleteNode(final VNode node) {
-		client.updateVariable(paintableId, "removedNode", node.getName(), true);
+	public boolean isOnLink() {
+		return onLink;
+	}
+
+	public void deleteSelectedItems() {
+		for (final VEdge edge : graph.getSelectedEdges()) {
+			deleteEdge(edge, true);
+		}
+		for (final VNode node : graph.getSelectedShapes()) {
+			deleteNode(node, true);
+		}
+		// client.sendPendingVariableChanges();
+	}
+
+	public void deleteNode(final VNode node, final boolean immediate) {
+		client.updateVariable(paintableId, "removedNode", node.getName(), immediate);
 		graph.removeNode(node);
 	}
 
-	public boolean isOnLink() {
-		return onLink;
+	private void deleteEdge(final VEdge edge, final boolean immediate) {
+		client.updateVariable(paintableId, "removedEdge", edge.getName(), immediate);
+		graph.removeEdge(edge);
 	}
 }

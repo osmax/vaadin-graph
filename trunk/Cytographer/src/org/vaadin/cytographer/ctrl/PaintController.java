@@ -1,4 +1,4 @@
-package org.vaadin.cytographer;
+package org.vaadin.cytographer.ctrl;
 
 import giny.model.Edge;
 import giny.model.Node;
@@ -7,12 +7,15 @@ import java.awt.Color;
 import java.util.HashSet;
 import java.util.Set;
 
+import org.vaadin.cytographer.model.GraphProperties;
+
 import com.vaadin.terminal.PaintException;
 import com.vaadin.terminal.PaintTarget;
 
 import cytoscape.CyNode;
 import cytoscape.Cytoscape;
 import cytoscape.visual.EdgeAppearance;
+import cytoscape.visual.LineStyle;
 import cytoscape.visual.NodeAppearance;
 import cytoscape.visual.VisualMappingManager;
 import cytoscape.visual.VisualPropertyType;
@@ -20,6 +23,7 @@ import cytoscape.visual.VisualStyle;
 
 public class PaintController {
 
+	private static final int MARGIN = 20;
 	private Set<Integer> paintedNodes = new HashSet<Integer>();
 
 	public void repaintGraph(final PaintTarget target, final GraphProperties gp) throws PaintException {
@@ -41,6 +45,9 @@ public class PaintController {
 		final Number nbw = (Number) vs.getNodeAppearanceCalculator().getDefaultAppearance().get(VisualPropertyType.NODE_LINE_WIDTH);
 		final Number efs = (Number) vs.getNodeAppearanceCalculator().getDefaultAppearance().get(VisualPropertyType.EDGE_FONT_SIZE);
 		final Number nfs = (Number) vs.getNodeAppearanceCalculator().getDefaultAppearance().get(VisualPropertyType.NODE_FONT_SIZE);
+
+		final LineStyle ls = (LineStyle) vs.getEdgeAppearanceCalculator().getDefaultAppearance().get(VisualPropertyType.EDGE_LINE_STYLE);
+		final String dashArray = getDashArray(ls);
 
 		Number ns = (Number) vs.getNodeAppearanceCalculator().getDefaultAppearance().get(VisualPropertyType.NODE_SIZE);
 		if (gp.getNodeSize() > 0) {
@@ -64,6 +71,7 @@ public class PaintController {
 		target.addAttribute("ns", ns.intValue());
 		target.addAttribute("efs", efs.intValue());
 		target.addAttribute("nfs", nfs.intValue());
+		target.addAttribute("eda", dashArray);
 
 		for (final int ei : gp.getEdges()) {
 			final Edge e = gp.getNetwork().getEdge(ei);
@@ -88,10 +96,10 @@ public class PaintController {
 			int y2 = (int) yy2;
 
 			if (gp.isUseFitting()) {
-				x1 = (int) ((xx1 - gp.getMinX()) / gp.getCytoscapeViewWidth() * gp.getWidth());
-				y1 = (int) ((yy1 - gp.getMinY()) / gp.getCytoscapeViewHeight() * gp.getHeight());
-				x2 = (int) ((xx2 - gp.getMinX()) / gp.getCytoscapeViewWidth() * gp.getWidth());
-				y2 = (int) ((yy2 - gp.getMinY()) / gp.getCytoscapeViewHeight() * gp.getHeight());
+				x1 = MARGIN + (int) ((xx1 - gp.getMinX()) / gp.getCytoscapeViewWidth() * (gp.getWidth() - 2 * MARGIN));
+				y1 = MARGIN + (int) ((yy1 - gp.getMinY()) / gp.getCytoscapeViewHeight() * (gp.getHeight() - 2 * MARGIN));
+				x2 = MARGIN + (int) ((xx2 - gp.getMinX()) / gp.getCytoscapeViewWidth() * (gp.getWidth() - 2 * MARGIN));
+				y2 = MARGIN + (int) ((yy2 - gp.getMinY()) / gp.getCytoscapeViewHeight() * (gp.getHeight() - 2 * MARGIN));
 			}
 
 			target.addAttribute("node1x", x1);
@@ -103,6 +111,9 @@ public class PaintController {
 				final EdgeAppearance ea = vs.getEdgeAppearanceCalculator().calculateEdgeAppearance(e, gp.getNetwork());
 				final NodeAppearance n1a = vs.getNodeAppearanceCalculator().calculateNodeAppearance(node1, gp.getNetwork());
 				final NodeAppearance n2a = vs.getNodeAppearanceCalculator().calculateNodeAppearance(node2, gp.getNetwork());
+
+				final LineStyle _ls = (LineStyle) ea.get(VisualPropertyType.EDGE_LINE_STYLE);
+				final String _dashArray = getDashArray(_ls);
 
 				target.addAttribute("_ec", getRGB((Color) ea.get(VisualPropertyType.EDGE_COLOR)));
 				target.addAttribute("_elw", ((Number) ea.get(VisualPropertyType.EDGE_LINE_WIDTH)).intValue());
@@ -120,6 +131,7 @@ public class PaintController {
 				target.addAttribute("_n2fc", getRGB((Color) n2a.get(VisualPropertyType.NODE_FILL_COLOR)));
 				target.addAttribute("_n2bw", ((Number) n2a.get(VisualPropertyType.NODE_LINE_WIDTH)).intValue());
 				target.addAttribute("_n2s", ((Number) n2a.get(VisualPropertyType.NODE_SIZE)).intValue());
+				target.addAttribute("_eda", _dashArray);
 			}
 			target.endTag("e");
 		}
@@ -127,7 +139,8 @@ public class PaintController {
 		for (final int nodeIndex : gp.getNodes()) {
 			final Node node1 = gp.getNetwork().getNode(nodeIndex);
 			if (!paintedNodes.contains(node1.getRootGraphIndex())) {
-				target.startTag("n");
+				target.startTag("e");
+				target.addAttribute("name", "tmp");
 				target.addAttribute("node1", node1.getIdentifier());
 				final double xx1 = gp.getFinalView().getNodeView(node1).getXPosition();
 				final double yy1 = gp.getFinalView().getNodeView(node1).getYPosition();
@@ -147,9 +160,30 @@ public class PaintController {
 						target.addAttribute("_n1s", ((Number) n1a.get(VisualPropertyType.NODE_SIZE)).intValue());
 					}
 				}
-				target.endTag("n");
+				target.endTag("e");
 			}
 		}
+	}
+
+	private String getDashArray(final LineStyle ls) {
+		String dashArray;
+		switch (ls) {
+		case DASH_DOT:
+			dashArray = "4 1";
+			break;
+		case LONG_DASH:
+			dashArray = "6 6";
+			break;
+		case EQUAL_DASH:
+			dashArray = "4 4";
+			break;
+		case DOT:
+			dashArray = "1 1";
+			break;
+		default:
+			dashArray = " ";
+		}
+		return dashArray;
 	}
 
 	public void paintNodeSize(final PaintTarget target, final GraphProperties graphProperties) throws PaintException {

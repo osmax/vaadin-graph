@@ -1,5 +1,8 @@
 package org.vaadin.cytographer;
 
+import org.vaadin.cytographer.ctrl.CytographerController;
+
+import com.vaadin.ui.Alignment;
 import com.vaadin.ui.Button;
 import com.vaadin.ui.Button.ClickEvent;
 import com.vaadin.ui.Component;
@@ -17,6 +20,9 @@ public class CytographerToolbar extends HorizontalLayout {
 		addComponent(getOpenButton());
 		addComponent(getSaveButton());
 		addComponent(getSaveAsButton());
+		Component fitb;
+		addComponent(fitb = getFitToViewButton());
+		setComponentAlignment(fitb, Alignment.BOTTOM_RIGHT);
 	}
 
 	private Component getNewButton() {
@@ -75,6 +81,20 @@ public class CytographerToolbar extends HorizontalLayout {
 		});
 		saveButton.setEnabled(false);
 		return saveButton;
+	}
+
+	private Component getFitToViewButton() {
+		final Button button = new Button("Fit to view");
+		button.setImmediate(true);
+		button.addListener(new Button.ClickListener() {
+			private static final long serialVersionUID = -8874905593085298508L;
+
+			@Override
+			public void buttonClick(final ClickEvent event) {
+				controller.fitToView();
+			}
+		});
+		return button;
 	}
 
 }
