@@ -1,6 +1,10 @@
-package org.vaadin.cytographer;
+package org.vaadin.cytographer.ctrl;
 
 import java.util.Random;
+
+import org.vaadin.cytographer.Cytographer;
+import org.vaadin.cytographer.CytographerApplication;
+import org.vaadin.cytographer.model.CytographerInit;
 
 import cytoscape.CyNetwork;
 import cytoscape.Cytoscape;
@@ -99,7 +103,11 @@ public class CytographerController {
 	}
 
 	public void repaintGraph() {
-		app.paintGraph(currentGraph);
+		currentGraph.repaintGraph();
+	}
+
+	public void fitToView() {
+		currentGraph.fitToView();
 	}
 
 }

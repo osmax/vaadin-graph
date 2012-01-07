@@ -1,9 +1,12 @@
 package org.vaadin.cytographer;
 
+import org.vaadin.cytographer.ctrl.CytographerController;
+
 import com.vaadin.data.Item;
 import com.vaadin.data.Property;
 import com.vaadin.data.Property.ValueChangeEvent;
 import com.vaadin.ui.Alignment;
+import com.vaadin.ui.Button;
 import com.vaadin.ui.Button.ClickEvent;
 import com.vaadin.ui.CheckBox;
 import com.vaadin.ui.Component;
@@ -38,11 +41,8 @@ public class CytographerActionToolbar extends HorizontalLayout {
 		addComponent(getStyleSelect());
 
 		final Component cb1 = getTextHideBox();
-		final Component cb2 = getStyleOptimizedBox();
 		addComponent(cb1);
-		addComponent(cb2);
 		setComponentAlignment(cb1, Alignment.BOTTOM_LEFT);
-		setComponentAlignment(cb2, Alignment.BOTTOM_LEFT);
 	}
 
 	public void setPath(final String path) {
@@ -61,7 +61,7 @@ public class CytographerActionToolbar extends HorizontalLayout {
 		i.getItemProperty("path").setValue(path + "galFiltered.sif");
 
 		networkSelect.setNullSelectionAllowed(true);
-		networkSelect.setNullSelectionItemId("new network");
+		networkSelect.setNullSelectionItemId("[select]");
 		networkSelect.setImmediate(true);
 		networkSelect.select(null);
 		networkSelect.addListener(new Property.ValueChangeListener() {
@@ -69,11 +69,10 @@ public class CytographerActionToolbar extends HorizontalLayout {
 
 			@Override
 			public void valueChange(final ValueChangeEvent event) {
-				if (networkSelect.getValue() == null) {
-					controller.createNewNetworkGraph();
-				} else {
+				if (networkSelect.getValue() != null) {
 					final String fileName = networkSelect.getItem(networkSelect.getValue()).getItemProperty("path").toString();
 					controller.loadNetworkGraph(fileName);
+					networkSelect.select(null);
 				}
 			}
 		});
@@ -130,18 +129,22 @@ public class CytographerActionToolbar extends HorizontalLayout {
 		i = layoutSelect.addItem("Circular");
 		i.getItemProperty("alg").setValue(new CircularLayoutAlgorithm());
 
-		layoutSelect.setNullSelectionAllowed(false);
+		layoutSelect.setNullSelectionAllowed(true);
+		layoutSelect.setNullSelectionItemId("[select]");
 		layoutSelect.setImmediate(true);
-		layoutSelect.select("Grid");
+		layoutSelect.select(null);
 
 		layoutSelect.addListener(new Property.ValueChangeListener() {
 			private static final long serialVersionUID = 3668584778868323776L;
 
 			@Override
 			public void valueChange(final ValueChangeEvent event) {
-				final CyLayoutAlgorithm loAlgorithm = (CyLayoutAlgorithm) layoutSelect.getItem(layoutSelect.getValue())
-						.getItemProperty("alg").getValue();
-				controller.applyLayoutAlgorithm(loAlgorithm);
+				if (layoutSelect.getValue() != null) {
+					final CyLayoutAlgorithm loAlgorithm = (CyLayoutAlgorithm) layoutSelect.getItem(layoutSelect.getValue())
+							.getItemProperty("alg").getValue();
+					controller.applyLayoutAlgorithm(loAlgorithm);
+					layoutSelect.select(null);
+				}
 			}
 		});
 		return layoutSelect;
@@ -150,26 +153,24 @@ public class CytographerActionToolbar extends HorizontalLayout {
 	private Component getNodeSizeSelect() {
 		final NativeSelect sizeSelect = new NativeSelect();
 		sizeSelect.setCaption("Node size");
+		sizeSelect.addItem("0");
 		sizeSelect.addItem("5");
 		sizeSelect.addItem("10");
 		sizeSelect.addItem("15");
 		sizeSelect.addItem("20");
 		sizeSelect.addItem("30");
 		sizeSelect.select("10");
-		sizeSelect.setNullSelectionAllowed(false);
+		sizeSelect.setNullSelectionAllowed(true);
+		sizeSelect.setNullSelectionItemId("[select]");
 		sizeSelect.setImmediate(true);
 		sizeSelect.addListener(new Property.ValueChangeListener() {
 			private static final long serialVersionUID = 8021555546280140242L;
-			private double nodeSize = -1;
 
 			@Override
 			public void valueChange(final ValueChangeEvent event) {
-				if (sizeSelect.getValue() == null) {
-					nodeSize = -1;
-				} else {
-					nodeSize = Double.valueOf(sizeSelect.getValue().toString());
+				if (sizeSelect.getValue() != null) {
+					controller.getCurrentGraph().setNodeSize(Double.valueOf(sizeSelect.getValue().toString()), true);
 				}
-				controller.getCurrentGraph().setNodeSize(nodeSize, true);
 			}
 		});
 		return sizeSelect;
@@ -184,23 +185,27 @@ public class CytographerActionToolbar extends HorizontalLayout {
 		styleSelect.addItem("Solid");
 		styleSelect.addItem("Universe");
 
-		styleSelect.setNullSelectionAllowed(false);
+		styleSelect.setNullSelectionAllowed(true);
+		styleSelect.setNullSelectionItemId("[select]");
 		styleSelect.setImmediate(true);
-		styleSelect.select("default");
+		styleSelect.select(null);
 		styleSelect.addListener(new Property.ValueChangeListener() {
 			private static final long serialVersionUID = 8021555546280140242L;
 
 			@Override
 			public void valueChange(final ValueChangeEvent event) {
-				Cytoscape.getVisualMappingManager().setVisualStyle(styleSelect.getValue().toString());
-				controller.repaintGraph();
+				if (styleSelect.getValue() != null) {
+					Cytoscape.getVisualMappingManager().setVisualStyle(styleSelect.getValue().toString());
+					controller.repaintGraph();
+					styleSelect.select(null);
+				}
 			}
 		});
 		return styleSelect;
 	}
 
 	private Component getTextHideBox() {
-		final CheckBox cb = new CheckBox("Hide texts");
+		final Button cb = new Button("Hide/show texts");
 		cb.setImmediate(true);
 		cb.setValue(true);
 		cb.addListener(new CheckBox.ClickListener() {
@@ -208,24 +213,10 @@ public class CytographerActionToolbar extends HorizontalLayout {
 
 			@Override
 			public void buttonClick(final ClickEvent event) {
-				controller.getCurrentGraph().setTextsVisible(!(Boolean) cb.getValue());
+				controller.getCurrentGraph().setTextsVisible(!controller.getCurrentGraph().isTextsVisible());
 			}
 		});
 		return cb;
 	}
 
-	private Component getStyleOptimizedBox() {
-		final CheckBox cb = new CheckBox("Node specific styles enabled");
-		cb.setImmediate(true);
-		cb.setValue(true);
-		cb.addListener(new CheckBox.ClickListener() {
-			private static final long serialVersionUID = 4837240993197391750L;
-
-			@Override
-			public void buttonClick(final ClickEvent event) {
-				controller.getCurrentGraph().setOptimizedStyles(!(Boolean) cb.getValue());
-			}
-		});
-		return cb;
-	}
 }

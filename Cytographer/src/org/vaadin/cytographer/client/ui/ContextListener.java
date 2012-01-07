@@ -8,6 +8,6 @@ public interface ContextListener {
 
 	public String getCommandName(Command command);
 
-	public void initCommands(ContextMenu contextMenu);
+	public void initCommands(VContextMenu contextMenu);
 
 }

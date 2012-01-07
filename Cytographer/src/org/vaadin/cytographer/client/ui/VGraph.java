@@ -24,13 +24,13 @@ public class VGraph extends VectorObject {
 
 	private VNode movedShape = null;
 	private final VVisualStyle style;
-	private final FocusDrawingArea canvas;
+	private final VFocusDrawingArea canvas;
 	private final VCytographer cytographer;
 
 	private final int gwidth;
 	private final int gheight;
 
-	public VGraph(final VCytographer cytographer, final VVisualStyle style, final FocusDrawingArea canvas, final int gwidth,
+	public VGraph(final VCytographer cytographer, final VVisualStyle style, final VFocusDrawingArea canvas, final int gwidth,
 			final int gheight) {
 		this.cytographer = cytographer;
 		this.style = style;
@@ -126,6 +126,7 @@ public class VGraph extends VectorObject {
 		for (final VNode n : getNodes().values()) {
 			n.setTextVisible(style.isTextsVisible());
 			n.setRadius(style.getNodeSize());
+			updateEdges(n, true);
 		}
 	}
 
@@ -169,26 +170,37 @@ public class VGraph extends VectorObject {
 				e.getText().setY((e.getFirstNode().getY() + node.getY()) / 2);
 			}
 			if (repaint) {
-				canvas.remove(e);
-				if (style.isTextsVisible()) {
-					canvas.remove(e.getText());
-				}
-				canvas.add(e);
-				if (style.isTextsVisible()) {
-					canvas.add(e.getText());
-				}
-				if (e.getFirstNode().equals(node)) {
-					canvas.remove(e.getSecondNode());
-					canvas.add(e.getSecondNode());
-				} else {
-					canvas.remove(e.getFirstNode());
-					canvas.add(e.getFirstNode());
-				}
+				updateEdgeIntoCanvas(e, node, false);
 			}
 		}
 		if (movedShape != null) {
 			canvas.remove(movedShape);
 			canvas.add(movedShape);
+		}
+	}
+
+	public void updateEdgeIntoCanvas(final VEdge e, final VNode node, final boolean bothNodes) {
+		canvas.remove(e);
+		if (style.isTextsVisible()) {
+			canvas.remove(e.getText());
+		}
+		canvas.add(e);
+		if (style.isTextsVisible()) {
+			canvas.add(e.getText());
+		}
+		if (!bothNodes) {
+			if (e.getFirstNode().equals(node)) {
+				canvas.remove(e.getSecondNode());
+				canvas.add(e.getSecondNode());
+			} else {
+				canvas.remove(e.getFirstNode());
+				canvas.add(e.getFirstNode());
+			}
+		} else {
+			canvas.remove(e.getSecondNode());
+			canvas.remove(e.getFirstNode());
+			canvas.add(e.getSecondNode());
+			canvas.add(e.getFirstNode());
 		}
 	}
 
@@ -248,6 +260,7 @@ public class VGraph extends VectorObject {
 
 	public void addNode(final VNode node) {
 		canvas.add(node);
+		nodes.put(node.getName(), node);
 		paintedShapes.add(node);
 	}
 
@@ -255,6 +268,7 @@ public class VGraph extends VectorObject {
 		canvas.add(edge);
 		createEdgeConnections(edge);
 		edges.put(edge.getName(), edge);
+		updateEdgeIntoCanvas(edge, null, true);
 	}
 
 	private void createEdgeConnections(final VEdge edge) {
@@ -295,6 +309,25 @@ public class VGraph extends VectorObject {
 		}
 		if (shapeToEdgesMap.remove(node) == null) {
 			VConsole.log("edgeset not found" + node.getName());
+		}
+	}
+
+	public void removeEdge(final VEdge edge) {
+		canvas.remove(edge);
+		edges.remove(edge.getName());
+		selectedEdges.remove(edge);
+		final VNode node1 = edge.getFirstNode();
+		final VNode node2 = edge.getSecondNode();
+		removeEdgeFromMap(edge, node1);
+		removeEdgeFromMap(edge, node2);
+	}
+
+	private void removeEdgeFromMap(final VEdge edge, final VNode node) {
+		if (node != null) {
+			final Set<VEdge> vedges = shapeToEdgesMap.get(node);
+			if (vedges != null) {
+				vedges.remove(edge);
+			}
 		}
 	}
 }

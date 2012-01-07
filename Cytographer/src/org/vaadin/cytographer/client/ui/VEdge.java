@@ -2,6 +2,7 @@ package org.vaadin.cytographer.client.ui;
 
 import org.vaadin.gwtgraphics.client.Line;
 import org.vaadin.gwtgraphics.client.Shape;
+import org.vaadin.gwtgraphics.client.impl.util.SVGUtil;
 import org.vaadin.gwtgraphics.client.shape.Text;
 
 import com.google.gwt.event.dom.client.ClickEvent;
@@ -45,6 +46,7 @@ public class VEdge extends Line implements ClickHandler {
 		final VEdge edge = new VEdge(cytographer, graph, node1, node2, text, name);
 		edge.setStrokeColor(style.getEdgeColor());
 		edge.setStrokeWidth(style.getEdgeLineWidth());
+		edge.setStrokeDashArray(style.getEdgeDashArray());
 
 		// edge specific style attributes
 		if (child != null && child.hasAttribute("_ec")) {
@@ -54,7 +56,14 @@ public class VEdge extends Line implements ClickHandler {
 		if (child != null && child.hasAttribute("_elw")) {
 			edge.setStrokeWidth(child.getIntAttribute("_elw"));
 		}
+		if (child != null && child.hasAttribute("_eda")) {
+			edge.setStrokeDashArray(child.getStringAttribute("_eda"));
+		}
 		return edge;
+	}
+
+	public void setStrokeDashArray(final String dasharray) {
+		SVGUtil.setAttributeNS(getElement(), "stroke-dasharray", dasharray);
 	}
 
 	public VNode getFirstNode() {
@@ -96,7 +105,7 @@ public class VEdge extends Line implements ClickHandler {
 
 	@Override
 	public void onClick(final ClickEvent event) {
-		graph.setEdgeSelected((VEdge) event.getSource(), graph.getSelectedEdges().contains(event.getSource()));
+		graph.setEdgeSelected((VEdge) event.getSource(), !graph.getSelectedEdges().contains(event.getSource()));
 		cytographer.nodeOrEdgeSelectionChanged();
 	}
 }

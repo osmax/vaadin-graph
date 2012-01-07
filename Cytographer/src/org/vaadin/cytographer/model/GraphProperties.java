@@ -1,11 +1,19 @@
-package org.vaadin.cytographer;
+package org.vaadin.cytographer.model;
 
 import giny.model.Edge;
 import giny.model.Node;
+import giny.view.NodeView;
 
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
 import java.util.Set;
+
+import org.apache.commons.lang.ArrayUtils;
+import org.apache.log4j.Logger;
 
 import com.vaadin.data.Container;
 import com.vaadin.data.Item;
@@ -19,17 +27,21 @@ import cytoscape.data.Semantics;
 import cytoscape.view.CyNetworkView;
 
 public class GraphProperties {
+	private static Logger logger = Logger.getLogger(GraphProperties.class);
 
 	private final String title;
 
 	private CyNetwork network;
 	private CyNetworkView finalView;
 
-	private final int[] edges;
-	private final int[] nodes;
+	private final List<Integer> edges;
+	private final List<Integer> nodes;
 
 	private final Set<String> selectedNodes = new HashSet<String>();
 	private final Set<String> selectedEdges = new HashSet<String>();
+
+	private final Map<String, Edge> edgeMap = new HashMap<String, Edge>();
+	private final Map<Node, List<Edge>> nodeToEdgesMap = new HashMap<Node, List<Edge>>();
 
 	private int width;
 	private int height;
@@ -51,9 +63,30 @@ public class GraphProperties {
 		this.network = network;
 		this.finalView = finalView;
 		this.title = title;
-		edges = network.getEdgeIndicesArray();
-		nodes = network.getNodeIndicesArray();
-		measureDimensions(finalView);
+		edges = new ArrayList<Integer>(Arrays.asList(ArrayUtils.toObject(network.getEdgeIndicesArray())));
+		nodes = new ArrayList<Integer>(Arrays.asList(ArrayUtils.toObject(network.getNodeIndicesArray())));
+		measureDimensions();
+		contructNodeToEdgesMap();
+	}
+
+	private void contructNodeToEdgesMap() {
+		for (final Integer edgeIndex : edges) {
+			final Edge e = getNetwork().getEdge(edgeIndex);
+			final Node node1 = e.getSource();
+			final Node node2 = e.getTarget();
+			addEdgeIntoMap(node1, e);
+			addEdgeIntoMap(node2, e);
+			edgeMap.put(e.getIdentifier(), e);
+		}
+	}
+
+	private void addEdgeIntoMap(final Node node, final Edge e) {
+		List<Edge> edges = nodeToEdgesMap.get(node);
+		if (edges == null) {
+			edges = new ArrayList<Edge>();
+			nodeToEdgesMap.put(node, edges);
+		}
+		edges.add(e);
 	}
 
 	public int getWidth() {
@@ -96,11 +129,11 @@ public class GraphProperties {
 		return network;
 	}
 
-	public int[] getEdges() {
+	public List<Integer> getEdges() {
 		return edges;
 	}
 
-	public int[] getNodes() {
+	public List<Integer> getNodes() {
 		return nodes;
 	}
 
@@ -160,7 +193,7 @@ public class GraphProperties {
 		this.finalView = finalView;
 	}
 
-	private void measureDimensions(final CyNetworkView finalView2) {
+	public void measureDimensions() {
 		for (final int ei : edges) {
 			final Edge e = network.getEdge(ei);
 			final Node node1 = e.getSource();
@@ -203,6 +236,7 @@ public class GraphProperties {
 	}
 
 	public void setZoomFactor(final float zoomFactor) {
+		logger.debug("setZoomFactor: " + zoomFactor);
 		this.zoomFactor = zoomFactor;
 	}
 
@@ -219,18 +253,22 @@ public class GraphProperties {
 	}
 
 	public void addSelectedNode(final String n) {
+		logger.debug("addSelectedNode: " + n);
 		selectedNodes.add(n);
 	}
 
 	public void addSelectedEdge(final String e) {
+		logger.debug("addSelectedEdge: " + e);
 		selectedEdges.add(e);
 	}
 
 	public void clearSelectedNodes() {
+		logger.debug("clearSelectedNodes");
 		selectedNodes.clear();
 	}
 
 	public void clearSelectedEdges() {
+		logger.debug("clearSelectedEdges");
 		selectedEdges.clear();
 	}
 
@@ -253,29 +291,71 @@ public class GraphProperties {
 		return container;
 	}
 
-	public void addANewNode(final String id, final int i, final int j) {
-		final CyNode node = Cytoscape.getCyNode(id, true);
-		network.addNode(node);
+	public void addANewNode(final String id, final int x, final int y) {
+		logger.debug("addANewNode: " + id + " " + x + " " + y);
+		CyNode node = Cytoscape.getCyNode(id, true);
+		node = network.addNode(node);
+		final NodeView nodeView = finalView.addNodeView(node.getRootGraphIndex());
+		nodeView.setXPosition(x);
+		nodeView.setYPosition(y);
+		nodes.add(node.getRootGraphIndex());
 	}
 
 	public void removeNode(final String id) {
+		logger.debug("removeNode: " + id);
 		final CyNode node = Cytoscape.getCyNode(id, false);
 		if (node != null) {
+			final List<Edge> edgs = nodeToEdgesMap.remove(node);
+			if (edgs != null) {
+				for (final Edge e : edgs) {
+					network.removeEdge(e.getRootGraphIndex(), true);
+					edges.remove(Integer.valueOf(e.getRootGraphIndex()));
+				}
+			}
 			network.removeNode(node.getRootGraphIndex(), true);
-			network.removeEdge(node.getRootGraphIndex(), true);
+			nodes.remove(Integer.valueOf(node.getRootGraphIndex()));
 		} else {
 			throw new IllegalStateException("Node not found " + id);
 		}
 	}
 
 	public void createAnEdge(final String[] ids) {
+		logger.debug("createAnEdge: " + Arrays.toString(ids));
 		final CyNode node1 = Cytoscape.getCyNode(ids[0], false);
 		final CyNode node2 = Cytoscape.getCyNode(ids[1], false);
 		if (node1 != null && node2 != null) {
 			final CyEdge edge = Cytoscape.getCyEdge(node1, node2, Semantics.INTERACTION, ids[2], true);
 			network.addEdge(edge);
+			edges.add(edge.getRootGraphIndex());
+			edgeMap.put(ids[2], edge);
+			addEdgeIntoMap(node1, edge);
+			addEdgeIntoMap(node2, edge);
 		} else {
 			throw new IllegalStateException("Edge creation failed since node not found " + Arrays.toString(ids));
+		}
+	}
+
+	public void removeEdge(final String id) {
+		logger.debug("removeEdge: " + id);
+		System.out.println("removing: " + id);
+		final Edge edge = edgeMap.remove(id);
+		edges.remove(Integer.valueOf(edge.getRootGraphIndex()));
+		selectedEdges.remove(id);
+
+		final Node node1 = edge.getSource();
+		final Node node2 = edge.getTarget();
+		removeEdgeFromTheMap(edge, node1);
+		removeEdgeFromTheMap(edge, node2);
+
+		network.removeEdge(edge.getRootGraphIndex(), true);
+	}
+
+	private void removeEdgeFromTheMap(final Edge edge, final Node node) {
+		if (node != null) {
+			final List<Edge> edgs = nodeToEdgesMap.get(node);
+			if (edgs != null) {
+				edgs.remove(edge);
+			}
 		}
 	}
 }
