@@ -310,9 +310,13 @@ public class GraphProperties {
 				for (final Edge e : edgs) {
 					network.removeEdge(e.getRootGraphIndex(), true);
 					edges.remove(Integer.valueOf(e.getRootGraphIndex()));
+					edgeMap.remove(e.getIdentifier());
+					selectedEdges.remove(e.getIdentifier());
 				}
 			}
+			finalView.removeNodeView(node);
 			network.removeNode(node.getRootGraphIndex(), true);
+			selectedNodes.remove(node.getIdentifier());
 			nodes.remove(Integer.valueOf(node.getRootGraphIndex()));
 		} else {
 			throw new IllegalStateException("Node not found " + id);
@@ -325,7 +329,9 @@ public class GraphProperties {
 		final CyNode node2 = Cytoscape.getCyNode(ids[1], false);
 		if (node1 != null && node2 != null) {
 			final CyEdge edge = Cytoscape.getCyEdge(node1, node2, Semantics.INTERACTION, ids[2], true);
+			edge.setIdentifier(ids[2]);
 			network.addEdge(edge);
+			finalView.addEdgeView(edge.getRootGraphIndex());
 			edges.add(edge.getRootGraphIndex());
 			edgeMap.put(ids[2], edge);
 			addEdgeIntoMap(node1, edge);
@@ -346,7 +352,7 @@ public class GraphProperties {
 		final Node node2 = edge.getTarget();
 		removeEdgeFromTheMap(edge, node1);
 		removeEdgeFromTheMap(edge, node2);
-
+		finalView.removeEdgeView(edge.getRootGraphIndex());
 		network.removeEdge(edge.getRootGraphIndex(), true);
 	}
 
