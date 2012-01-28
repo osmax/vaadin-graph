@@ -1,7 +1,7 @@
 Manifest-Version: 1.0
 Implementation-Title: CytoGrapher
-Implementation-Version: 0.5
+Implementation-Version: 0.6.0
 Vaadin-Package-Version: 1
-Vaadin-Widgetsets: org.vaadin.cytographer.CytographerWidgetset
 Class-Path: 
+Vaadin-Widgetsets: org.vaadin.cytographer.CytographerWidgetset
 
