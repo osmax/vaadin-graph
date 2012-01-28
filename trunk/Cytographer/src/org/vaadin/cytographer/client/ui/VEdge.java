@@ -21,7 +21,7 @@ public class VEdge extends Line implements ClickHandler {
 
 	public VEdge(final VCytographer cytographer, final VGraph graph, final VNode node1, final VNode node2, final Shape text,
 			final String name) {
-		super(node1.getX(), node1.getY(), node2.getX(), node2.getY());
+		super((int) node1.getX(), (int) node1.getY(), (int) node2.getX(), (int) node2.getY());
 		this.cytographer = cytographer;
 		this.graph = graph;
 		this.node1 = node1;
@@ -31,13 +31,37 @@ public class VEdge extends Line implements ClickHandler {
 		addClickHandler(this);
 	}
 
+	public void refreshEdgeData(final UIDL child, final VVisualStyle style) {
+		((Text) text).setFontSize(style.getEdgeFontSize());
+		((Text) text).setFontFamily(style.getFontFamily());
+		text.setStrokeOpacity(0);
+		text.setFillOpacity(1);
+		text.setFillColor(style.getEdgeLabelColor());
+
+		setStrokeColor(style.getEdgeColor());
+		setStrokeWidth(style.getEdgeLineWidth());
+		setStrokeDashArray(style.getEdgeDashArray());
+
+		// edge specific style attributes
+		if (child != null && child.hasAttribute("_ec")) {
+			setStrokeColor(child.getStringAttribute("_ec"));
+			setOriginalStrokeColor(getStrokeColor());
+		}
+		if (child != null && child.hasAttribute("_elw")) {
+			setStrokeWidth(child.getIntAttribute("_elw"));
+		}
+		if (child != null && child.hasAttribute("_eda")) {
+			setStrokeDashArray(child.getStringAttribute("_eda"));
+		}
+	}
+
 	public static VEdge createAnEdge(final UIDL child, final VCytographer cytographer, final VGraph graph, final String name,
 			final VNode node1, final VNode node2, final VVisualStyle style) {
 		String str = "";
 		if (name.indexOf("(") != -1 && name.indexOf(")") != -1) {
 			str = name.substring(name.indexOf("(") + 1, name.indexOf(")"));
 		}
-		final Text text = new Text((node1.getX() + node2.getX()) / 2, (node1.getY() + node2.getY()) / 2, str);
+		final Text text = new Text((int) (node1.getX() + node2.getX()) / 2, (int) (node1.getY() + node2.getY()) / 2, str);
 		text.setFontSize(style.getEdgeFontSize());
 		text.setFontFamily(style.getFontFamily());
 		text.setStrokeOpacity(0);

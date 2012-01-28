@@ -25,7 +25,7 @@ public class CytographerApplication extends Application {
 	private final VerticalLayout mainLayout = new VerticalLayout();
 	private final HorizontalLayout hl2 = new HorizontalLayout();
 
-	private final CytographerController controller;
+	private transient final CytographerController controller;
 
 	public CytographerApplication() {
 		controller = new CytographerController(this, WIDTH, HEIGHT);
@@ -57,8 +57,12 @@ public class CytographerApplication extends Application {
 	private Component getInfoLabel() {
 		final VerticalLayout vlo = new VerticalLayout();
 		final Label l1 = new Label(
-				"<h2><h3 style=\"color:red;\">Cytographer main features</h3><ul><li>No Flash or browser plugins needed!</li><li>Drag and drop move nodes</li><li>Drag and drop move whole graph</li><li>Mouse wheel zoom</li><li>Node selection and deselection by mouse click</li><li>Generic or node specific styles</li><li>Ctrl-click and drag selection box</li><li>Right click context menu for node linking and deletion</li><li>Double click node creation</li></ul></h2>",
-				Label.CONTENT_XHTML);
+				"<h2><h3 style=\"color:red;\">Cytographer main features</h3><ul><li>No Flash or browser plugins needed!</li>"
+						+ "<li>Drag and drop move nodes</li>" + "<li>Drag and drop move whole graph</li>"
+						+ "<li>Mouse wheel zoom (centered) </li>" + "<li>ALT + Mouse wheel rotate (centered)</li>"
+						+ "<li>Node/edge selection and deselection by mouse click</li>" + "<li>Generic or node specific styles</li>"
+						+ "<li>Ctrl-click and drag selection box</li>" + "<li>Right click context menu for node linking and deletion</li>"
+						+ "<li>Double click node creation</li>" + "</ul></h2>", Label.CONTENT_XHTML);
 
 		vlo.addComponent(l1);
 		return vlo;

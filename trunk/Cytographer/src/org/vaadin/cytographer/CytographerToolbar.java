@@ -20,6 +20,8 @@ public class CytographerToolbar extends HorizontalLayout {
 		addComponent(getOpenButton());
 		addComponent(getSaveButton());
 		addComponent(getSaveAsButton());
+		addComponent(getZoomOutButton());
+		addComponent(getZoomInButton());
 		Component fitb;
 		addComponent(fitb = getFitToViewButton());
 		setComponentAlignment(fitb, Alignment.BOTTOM_RIGHT);
@@ -92,6 +94,34 @@ public class CytographerToolbar extends HorizontalLayout {
 			@Override
 			public void buttonClick(final ClickEvent event) {
 				controller.fitToView();
+			}
+		});
+		return button;
+	}
+
+	private Component getZoomOutButton() {
+		final Button button = new Button("-");
+		button.setImmediate(true);
+		button.addListener(new Button.ClickListener() {
+			private static final long serialVersionUID = -2424360452782278429L;
+
+			@Override
+			public void buttonClick(final ClickEvent event) {
+				controller.zoomOut();
+			}
+		});
+		return button;
+	}
+
+	private Component getZoomInButton() {
+		final Button button = new Button("+");
+		button.setImmediate(true);
+		button.addListener(new Button.ClickListener() {
+			private static final long serialVersionUID = -1990896114255311865L;
+
+			@Override
+			public void buttonClick(final ClickEvent event) {
+				controller.zoomIn();
 			}
 		});
 		return button;

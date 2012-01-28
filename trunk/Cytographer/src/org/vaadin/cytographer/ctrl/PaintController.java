@@ -219,4 +219,8 @@ public class PaintController {
 		return "rgb(" + bc.getRed() + "," + bc.getGreen() + "," + bc.getBlue() + ")";
 	}
 
+	public void setZoom(final PaintTarget target, final GraphProperties graphProperties) throws PaintException {
+		target.addAttribute("zoom", graphProperties.getZoomFactor());
+	}
+
 }

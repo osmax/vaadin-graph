@@ -44,6 +44,28 @@ public class VGraph extends VectorObject {
 		paintGraph();
 	}
 
+	public void refreshGraphFromUIDL(final UIDL uidl) {
+		for (int i = 0; i < uidl.getChildCount(); i++) {
+			final UIDL child = uidl.getChildUIDL(i);
+			final String name = child.getStringAttribute("name");
+			if (name == null || name.isEmpty()) {
+				continue;
+			}
+			final String node1name = child.getStringAttribute("node1");
+			final String node2name = child.getStringAttribute("node2");
+
+			final VNode node1 = nodes.get(node1name);
+			final VNode node2 = nodes.get(node2name);
+
+			node1.refreshNodeData(child, style);
+			node2.refreshNodeData(child, style);
+
+			final VEdge edge = edges.get(name);
+			edge.refreshEdgeData(child, style);
+		}
+		paintGraph();
+	}
+
 	public void parseGraphFromUIDL(final UIDL uidl, final VVisualStyle style) {
 		edges = new HashMap<String, VEdge>();
 		nodes = new HashMap<String, VNode>();
@@ -53,7 +75,7 @@ public class VGraph extends VectorObject {
 			final UIDL child = uidl.getChildUIDL(i);
 			final String name = child.getStringAttribute("name");
 			if (name == null || name.isEmpty()) {
-				return;
+				continue;
 			}
 			final String node1name = child.getStringAttribute("node1");
 			final String node2name = child.getStringAttribute("node2");
@@ -135,7 +157,7 @@ public class VGraph extends VectorObject {
 		// TODO
 	}
 
-	public void moveGraph(final int x, final int y) {
+	public void moveGraph(final float x, final float y) {
 		for (final VNode shape : getPaintedShapes()) {
 			shape.setX(shape.getX() - x);
 			shape.setY(shape.getY() - y);
@@ -159,15 +181,15 @@ public class VGraph extends VectorObject {
 		for (final VEdge e : edgs) {
 			// update edge positions
 			if (e.getFirstNode().equals(node)) {
-				e.setX1(node.getX());
-				e.setY1(node.getY());
-				e.getText().setX((node.getX() + e.getSecondNode().getX()) / 2);
-				e.getText().setY((node.getY() + e.getSecondNode().getY()) / 2);
+				e.setX1((int) node.getX());
+				e.setY1((int) node.getY());
+				e.getText().setX((int) (node.getX() + e.getSecondNode().getX()) / 2);
+				e.getText().setY((int) (node.getY() + e.getSecondNode().getY()) / 2);
 			} else {
-				e.setX2(node.getX());
-				e.setY2(node.getY());
-				e.getText().setX((e.getFirstNode().getX() + node.getX()) / 2);
-				e.getText().setY((e.getFirstNode().getY() + node.getY()) / 2);
+				e.setX2((int) node.getX());
+				e.setY2((int) node.getY());
+				e.getText().setX((int) (e.getFirstNode().getX() + node.getX()) / 2);
+				e.getText().setY((int) (e.getFirstNode().getY() + node.getY()) / 2);
 			}
 			if (repaint) {
 				updateEdgeIntoCanvas(e, node, false);
