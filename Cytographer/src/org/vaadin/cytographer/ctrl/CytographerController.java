@@ -19,8 +19,6 @@ public class CytographerController {
 		final CytoscapeInit init = new CytoscapeInit();
 		init.init(new CytographerInit());
 	}
-
-	private String currentFileName;
 	private Cytographer currentGraph;
 	private CyNetworkView currentView;
 	private final CytographerApplication app;
@@ -35,31 +33,30 @@ public class CytographerController {
 	}
 
 	public void loadCytoscapeSession(final String fileName) {
-		final CyNetwork net = Cytoscape.createNetwork(fileName, false);
-		currentView = Cytoscape.createNetworkView(net);
-		currentFileName = fileName;
-
 		Cytoscape.createNewSession();
 		Cytoscape.setSessionState(Cytoscape.SESSION_OPENED);
 		Cytoscape.createNewSession();
 		Cytoscape.setSessionState(Cytoscape.SESSION_NEW);
 		CytoscapeSessionReader sr;
 		try {
+			Cytoscape.getDesktop().setVisible(false);
 			sr = new CytoscapeSessionReader(fileName, null);
 			sr.read();
+			Cytoscape.getDesktop().setVisible(false);
 		} catch (final Exception e) {
 			e.printStackTrace();
 		} finally {
 			sr = null;
 		}
 		Cytoscape.setCurrentSessionFileName(fileName);
+		final CyNetwork net = Cytoscape.getCurrentNetwork();
+		currentView = Cytoscape.getCurrentNetworkView();
 
 		final Cytographer graph = new Cytographer(net, currentView, fileName, width, height);
 		graph.setImmediate(true);
 		graph.setWidth(width + "px");
 		graph.setHeight(height + "px");
 		currentGraph = graph;
-		currentGraph.setNodeSize(10, false);
 		app.paintGraph(currentGraph);
 	}
 
@@ -67,7 +64,6 @@ public class CytographerController {
 		Cytoscape.createNewSession();
 		final CyNetwork net = Cytoscape.createNetworkFromFile(fileName);
 		currentView = Cytoscape.createNetworkView(net);
-		currentFileName = fileName;
 
 		final Cytographer graph = new Cytographer(net, currentView, fileName, width, height);
 		graph.setImmediate(true);
@@ -108,6 +104,18 @@ public class CytographerController {
 
 	public void fitToView() {
 		currentGraph.fitToView();
+	}
+
+	public void zoomOut() {
+		currentGraph.zoomOut();
+	}
+
+	public void zoomIn() {
+		currentGraph.zoomIn();
+	}
+
+	public void refreshGraph() {
+		currentGraph.refresh();
 	}
 
 }

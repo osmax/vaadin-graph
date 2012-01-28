@@ -47,7 +47,7 @@ public class GraphProperties {
 	private int height;
 	private int cytoscapeViewWidth;
 	private int cytoscapeViewHeight;
-	private float zoomFactor = 1;
+	private int zoomFactor = 0;
 	private double nodeSize = -1;
 
 	private int maxX = Integer.MIN_VALUE;
@@ -231,11 +231,11 @@ public class GraphProperties {
 		cytoscapeViewHeight = maxY - minY;
 	}
 
-	public float getZoomFactor() {
+	public int getZoomFactor() {
 		return zoomFactor;
 	}
 
-	public void setZoomFactor(final float zoomFactor) {
+	public void setZoomFactor(final int zoomFactor) {
 		logger.debug("setZoomFactor: " + zoomFactor);
 		this.zoomFactor = zoomFactor;
 	}

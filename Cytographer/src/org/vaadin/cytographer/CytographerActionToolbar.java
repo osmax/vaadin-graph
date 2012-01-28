@@ -35,7 +35,7 @@ public class CytographerActionToolbar extends HorizontalLayout {
 		this.controller = controller;
 		this.path = path;
 		addComponent(getNetworkSelect());
-		// addComponent(getSessionSelect());
+		addComponent(getSessionSelect());
 		addComponent(getLayoutSelect());
 		addComponent(getNodeSizeSelect());
 		addComponent(getStyleSelect());
@@ -83,8 +83,9 @@ public class CytographerActionToolbar extends HorizontalLayout {
 	private Component getSessionSelect() {
 		sessionSelect = new NativeSelect();
 		sessionSelect.setImmediate(true);
+		sessionSelect.select(null);
 		sessionSelect.setNullSelectionAllowed(true);
-		sessionSelect.setNullSelectionItemId("-no selection-");
+		sessionSelect.setNullSelectionItemId("[select]");
 		sessionSelect.setCaption("Cytoscape session file");
 		sessionSelect.addContainerProperty("path", String.class, null);
 
@@ -102,13 +103,10 @@ public class CytographerActionToolbar extends HorizontalLayout {
 
 			@Override
 			public void valueChange(final ValueChangeEvent event) {
-				if (sessionSelect.getValue() == null) {
-					networkSelect.setEnabled(true);
-					networkSelect.select(null);
-				} else {
-					networkSelect.setEnabled(false);
+				if (sessionSelect.getValue() != null) {
 					final String fileName = sessionSelect.getItem(sessionSelect.getValue()).getItemProperty("path").toString();
 					controller.loadCytoscapeSession(fileName);
+					sessionSelect.select(null);
 				}
 			}
 		});
@@ -196,7 +194,7 @@ public class CytographerActionToolbar extends HorizontalLayout {
 			public void valueChange(final ValueChangeEvent event) {
 				if (styleSelect.getValue() != null) {
 					Cytoscape.getVisualMappingManager().setVisualStyle(styleSelect.getValue().toString());
-					controller.repaintGraph();
+					controller.refreshGraph();
 					styleSelect.select(null);
 				}
 			}

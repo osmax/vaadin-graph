@@ -39,6 +39,8 @@ import com.vaadin.terminal.gwt.client.VConsole;
 
 public class VCytographer extends Composite implements Paintable, ClickHandler, DoubleClickHandler, MouseDownHandler, MouseUpHandler,
 		MouseMoveHandler, MouseWheelHandler, KeyDownHandler, KeyUpHandler {
+	private static final double ZOOM_DOWN = 0.90;
+	private static final double ZOOM_UP = 1.10;
 	private static final long serialVersionUID = 5554800884802605342L;
 	public static final String CLASSNAME = "v-vaadingraph";
 
@@ -59,18 +61,20 @@ public class VCytographer extends Composite implements Paintable, ClickHandler, 
 	private VectorObject info;
 	private VContextMenu currentMenu;
 
-	private int startY;
-	private int startX;
+	private float startY;
+	private float startX;
+	private int zoomFactor = 0;
 	private float fps = 1;
-	private long paintStartTime;
 	private float angle = 0;
-	private float zoomFactor = 1;
+	private long paintStartTime;
+
 	private boolean onMove = false;
 	private boolean onLink = false;
-
-	private final boolean showInfo = true;
+	private static final boolean showInfo = true;
 
 	private Set<Integer> currentKeyModifiers;
+	private float centerX = graphWidth / 2f;
+	private float centerY = graphHeight / 2f;
 
 	/**
 	 * The constructor should first call super() to initialize the component and
@@ -134,6 +138,10 @@ public class VCytographer extends Composite implements Paintable, ClickHandler, 
 			graph.paintGraph();
 		} else if ("UPDATE_NODE".equals(operation)) {
 			graph.updateNode(uidl, uidl.getStringAttribute("node"));
+		} else if ("SET_ZOOM".equals(operation)) {
+			setZoom(uidl.getIntAttribute("zoom"));
+		} else if ("REFRESH".equals(operation)) {
+			refresh(uidl);
 		} else {
 			repaint(uidl);
 		}
@@ -142,9 +150,17 @@ public class VCytographer extends Composite implements Paintable, ClickHandler, 
 	private void repaint(final UIDL uidl) {
 		graphWidth = uidl.getIntAttribute("gwidth");
 		graphHeight = uidl.getIntAttribute("gheight");
+		centerX = graphWidth / 2f;
+		centerY = graphHeight / 2f;
+		zoomFactor = 0;
 		style.parseGeneralStyleAttributesFromUidl(uidl);
 		initializeCanvas();
 		graph.repaintGraph(uidl);
+	}
+
+	private void refresh(final UIDL uidl) {
+		style.parseGeneralStyleAttributesFromUidl(uidl);
+		graph.refreshGraphFromUIDL(uidl);
 	}
 
 	private void initializeCanvas() {
@@ -270,7 +286,7 @@ public class VCytographer extends Composite implements Paintable, ClickHandler, 
 		nodeOrEdgeSelectionChanged();
 	}
 
-	private boolean isInArea(final int targetX, final int targetY, final int x1, final int y1, final int x2, final int y2) {
+	private boolean isInArea(final float targetX, final float targetY, final int x1, final int y1, final int x2, final int y2) {
 		return targetX >= x1 && targetX <= x2 && targetY >= y1 && targetY <= y2;
 	}
 
@@ -284,7 +300,7 @@ public class VCytographer extends Composite implements Paintable, ClickHandler, 
 	}
 
 	private Line getLinkLine(final int x, final int y) {
-		final Line linkLine = new Line(startX, startY, x, y);
+		final Line linkLine = new Line((int) startX, (int) startY, x, y);
 		linkLine.setStrokeColor(style.getEdgeColor());
 		linkLine.setStrokeOpacity(0.55);
 		return linkLine;
@@ -328,17 +344,17 @@ public class VCytographer extends Composite implements Paintable, ClickHandler, 
 	@Override
 	public void onMouseWheel(final MouseWheelEvent event) {
 		final int delta = event.getDeltaY();
-		if (currentKeyModifiers.contains(KeyCodes.KEY_CTRL)) {
+		if (currentKeyModifiers.contains(KeyCodes.KEY_ALT)) {
 			if (delta < 0) {
-				rotate(0.035);
+				rotate(0.05);
 			} else if (delta > 0) {
-				rotate(-0.035);
+				rotate(-0.05);
 			}
 		} else {
 			if (delta < 0) {
-				zoom(1.05);
+				zoom(ZOOM_UP);
 			} else if (delta > 0) {
-				zoom(0.95);
+				zoom(ZOOM_DOWN);
 			}
 		}
 		paintGraph();
@@ -346,8 +362,8 @@ public class VCytographer extends Composite implements Paintable, ClickHandler, 
 
 	private void rotate(final double delta) {
 		for (final VNode n : graph.getPaintedShapes()) {
-			final int newX = (int) (n.getX() * Math.cos(delta) - n.getY() * Math.sin(delta));
-			final int newY = (int) (n.getX() * Math.sin(delta) + n.getY() * Math.cos(delta));
+			final float newX = (float) ((n.getX() - centerX) * Math.cos(delta) - (n.getY() - centerY) * Math.sin(delta)) + centerX;
+			final float newY = (float) ((n.getX() - centerX) * Math.sin(delta) + (n.getY() - centerY) * Math.cos(delta)) + centerY;
 			n.setX(newX);
 			n.setY(newY);
 			graph.updateEdges(n, false);
@@ -355,10 +371,28 @@ public class VCytographer extends Composite implements Paintable, ClickHandler, 
 		angle += delta;
 	}
 
-	private void zoom(final double delta) {
+	private void setZoom(final int newZoomFactor) {
+		if (newZoomFactor > zoomFactor) {
+			for (int i = 0; i < newZoomFactor - zoomFactor; i++) {
+				zoom(ZOOM_UP);
+			}
+		} else {
+			for (int i = 0; i < zoomFactor - newZoomFactor; i++) {
+				zoom(ZOOM_DOWN);
+			}
+		}
+	}
+
+	private void zoom(final double factor) {
+		if (factor < 1) {
+			zoomFactor--;
+		} else {
+			zoomFactor++;
+		}
 		for (final VNode n : graph.getPaintedShapes()) {
-			n.setX((int) (n.getX() * delta));
-			n.setY((int) (n.getY() * delta));
+			n.setX((float) ((n.getX() - centerX) * factor) + centerX);
+			n.setY((float) ((n.getY() - centerY) * factor) + centerY);
+
 			if (n.getView() instanceof Circle) {
 				/*
 				 * if (delta > 1) { ((Circle) n.getView()).setRadius((((Circle)
@@ -369,7 +403,6 @@ public class VCytographer extends Composite implements Paintable, ClickHandler, 
 			}
 			graph.updateEdges(n, false);
 		}
-		zoomFactor += delta;
 		client.updateVariable(paintableId, "zoomFactor", zoomFactor, true);
 	}
 

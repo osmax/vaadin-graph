@@ -11,7 +11,6 @@ import java.util.Map;
 import java.util.Random;
 
 import org.vaadin.gwtgraphics.client.Group;
-import org.vaadin.gwtgraphics.client.Positionable;
 import org.vaadin.gwtgraphics.client.Shape;
 import org.vaadin.gwtgraphics.client.VectorObject;
 import org.vaadin.gwtgraphics.client.shape.Circle;
@@ -30,9 +29,11 @@ import com.google.gwt.user.client.Command;
 import com.vaadin.terminal.gwt.client.UIDL;
 import com.vaadin.terminal.gwt.client.VConsole;
 
-public class VNode extends Group implements ContextListener, Positionable, MouseDownHandler, MouseUpHandler, MouseMoveHandler, ClickHandler {
+public class VNode extends Group implements ContextListener, MouseDownHandler, MouseUpHandler, MouseMoveHandler, ClickHandler {
 
 	private final VGraph graph;
+	private float x;
+	private float y;
 	private Shape view;
 	private final Text text;
 	private final String name;
@@ -58,6 +59,32 @@ public class VNode extends Group implements ContextListener, Positionable, Mouse
 		addMouseMoveHandler(this);
 	}
 
+	public void refreshNodeData(final UIDL child, final VVisualStyle style) {
+		view.setFillColor(style.getNodeFillColor());
+		view.setStrokeColor(style.getNodeBorderColor());
+		view.setStrokeWidth(style.getNodeBorderWidth());
+
+		setLabelColor(style.getNodeLabelColor());
+		setFontSize(style.getNodeFontSize());
+		setFontFamily(style.getFontFamily());
+		setTextVisible(style.isTextsVisible());
+
+		// node specific styles
+		if (child.hasAttribute("_n1bc")) {
+			view.setStrokeColor(child.getStringAttribute("_n1bc"));
+		}
+		if (child.hasAttribute("_n1fc")) {
+			view.setFillColor(child.getStringAttribute("_n1fc"));
+			setOriginalFillColor(view.getFillColor());
+		}
+		if (child.hasAttribute("_n1bw")) {
+			view.setStrokeWidth(child.getIntAttribute("_n1bw"));
+		}
+		if (child.hasAttribute("_n1s")) {
+			((Circle) view).setRadius(child.getIntAttribute("_n1s") / 2);
+		}
+	}
+
 	public static VNode createANode(final UIDL child, final VCytographer cytographer, final VGraph graph, final String nodeName,
 			final boolean firstNode, final VVisualStyle style) {
 		Circle shape = null;
@@ -71,10 +98,13 @@ public class VNode extends Group implements ContextListener, Positionable, Mouse
 		shape.setStrokeWidth(style.getNodeBorderWidth());
 
 		final VNode node = new VNode(cytographer, graph, shape, nodeName);
+
 		node.setLabelColor(style.getNodeLabelColor());
 		node.setFontSize(style.getNodeFontSize());
 		node.setFontFamily(style.getFontFamily());
 		node.setTextVisible(style.isTextsVisible());
+		node.setX(shape.getX());
+		node.setY(shape.getY());
 
 		// node specific styles
 		if (child.hasAttribute("_n1bc")) {
@@ -93,14 +123,17 @@ public class VNode extends Group implements ContextListener, Positionable, Mouse
 		return node;
 	}
 
-	public static VNode createANode(final int x, final int y, final VCytographer cytographer, final VGraph graph, final VVisualStyle style) {
-		final Circle shape = new Circle(x, y, style.getNodeSize());
+	public static VNode createANode(final float x, final float y, final VCytographer cytographer, final VGraph graph,
+			final VVisualStyle style) {
+		final Circle shape = new Circle((int) x, (int) y, style.getNodeSize());
 
 		shape.setFillColor(style.getNodeFillColor());
 		shape.setStrokeColor(style.getNodeBorderColor());
 		shape.setStrokeWidth(style.getNodeBorderWidth());
 
 		final VNode node = new VNode(cytographer, graph, shape, "tmp" + new Random().nextInt(1000000));
+		node.setX(x);
+		node.setY(y);
 		node.setLabelColor(style.getNodeLabelColor());
 		node.setFontSize(style.getNodeFontSize());
 		node.setFontFamily(style.getFontFamily());
@@ -127,14 +160,12 @@ public class VNode extends Group implements ContextListener, Positionable, Mouse
 		return name;
 	}
 
-	@Override
-	public int getX() {
-		return view.getX();
+	public float getX() {
+		return x;
 	}
 
-	@Override
-	public int getY() {
-		return view.getY();
+	public float getY() {
+		return y;
 	}
 
 	public void setFillColor(final String color) {
@@ -146,16 +177,16 @@ public class VNode extends Group implements ContextListener, Positionable, Mouse
 		text.setFillOpacity(1);
 	}
 
-	@Override
-	public void setX(final int i) {
-		view.setX(i);
-		text.setX(i);
+	public void setX(final float x) {
+		this.x = x;
+		view.setX((int) x);
+		text.setX((int) x);
 	}
 
-	@Override
-	public void setY(final int i) {
-		view.setY(i);
-		text.setY(i);
+	public void setY(final float y) {
+		this.y = y;
+		view.setY((int) y);
+		text.setY((int) y);
 	}
 
 	public void setFontSize(final int nodeFontSize) {
@@ -196,9 +227,9 @@ public class VNode extends Group implements ContextListener, Positionable, Mouse
 		}
 	}
 
-	public void moveNode(final double x, final double y) {
-		setX((int) x);
-		setY((int) y);
+	public void moveNode(final float x, final float y) {
+		setX(x);
+		setY(y);
 		graph.updateEdges(this, true);
 	}
 

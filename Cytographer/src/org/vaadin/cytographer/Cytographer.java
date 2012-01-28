@@ -21,7 +21,7 @@ public class Cytographer extends AbstractComponent {
 	private static final long serialVersionUID = 8483008141219579936L;
 
 	public enum GraphOperation {
-		REPAINT, SET_NODE_SIZE, SET_VISUAL_STYLE, SET_TEXT_VISIBILITY, SET_OPTIMIZED_STYLES, UPDATE_NODE
+		REPAINT, SET_NODE_SIZE, SET_VISUAL_STYLE, SET_TEXT_VISIBILITY, SET_OPTIMIZED_STYLES, UPDATE_NODE, SET_ZOOM, REFRESH
 	}
 
 	private GraphOperation currentOperation = GraphOperation.REPAINT;
@@ -54,6 +54,13 @@ public class Cytographer extends AbstractComponent {
 			break;
 		case UPDATE_NODE:
 			ctrl.updateNode(target, graphProperties, updatedNode);
+			break;
+		case SET_ZOOM:
+			ctrl.setZoom(target, graphProperties);
+			break;
+		case REFRESH:
+			ctrl.repaintGraph(target, graphProperties);
+			break;
 		default:
 			;
 		}
@@ -86,7 +93,7 @@ public class Cytographer extends AbstractComponent {
 			System.out.printf("Selected %d nodes\n", graphProperties.getSelectedNodes().size());
 		}
 		if (variables.containsKey("zoomFactor")) {
-			graphProperties.setZoomFactor((Float) variables.get("zoomFactor"));
+			graphProperties.setZoomFactor((Integer) variables.get("zoomFactor"));
 		}
 		if (variables.containsKey("createdANode")) {
 			final Object[] nodeData = (Object[]) variables.get("createdANode");
@@ -153,6 +160,7 @@ public class Cytographer extends AbstractComponent {
 
 	public void repaintGraph() {
 		currentOperation = GraphOperation.REPAINT;
+		graphProperties.setZoomFactor(0);
 		requestRepaint();
 	}
 
@@ -173,11 +181,29 @@ public class Cytographer extends AbstractComponent {
 	public void fitToView() {
 		graphProperties.measureDimensions();
 		graphProperties.setFitting(true);
+		graphProperties.setZoomFactor(0);
 		currentOperation = GraphOperation.REPAINT;
 		requestRepaint();
 	}
 
 	public boolean isTextsVisible() {
 		return graphProperties.isTextsVisible();
+	}
+
+	public void zoomIn() {
+		graphProperties.setZoomFactor(graphProperties.getZoomFactor() + 1);
+		currentOperation = GraphOperation.SET_ZOOM;
+		requestRepaint();
+	}
+
+	public void zoomOut() {
+		graphProperties.setZoomFactor(graphProperties.getZoomFactor() - 1);
+		currentOperation = GraphOperation.SET_ZOOM;
+		requestRepaint();
+	}
+
+	public void refresh() {
+		currentOperation = GraphOperation.REFRESH;
+		requestRepaint();
 	}
 }
