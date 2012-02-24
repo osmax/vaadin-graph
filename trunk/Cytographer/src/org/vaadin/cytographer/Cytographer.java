@@ -21,7 +21,7 @@ public class Cytographer extends AbstractComponent {
 	private static final long serialVersionUID = 8483008141219579936L;
 
 	public enum GraphOperation {
-		REPAINT, SET_NODE_SIZE, SET_VISUAL_STYLE, SET_TEXT_VISIBILITY, SET_OPTIMIZED_STYLES, UPDATE_NODE, SET_ZOOM, REFRESH
+		REPAINT, SET_NODE_SIZE, SET_TEXT_VISIBILITY, UPDATE_NODE, SET_ZOOM, REFRESH
 	}
 
 	private GraphOperation currentOperation = GraphOperation.REPAINT;
@@ -43,14 +43,8 @@ public class Cytographer extends AbstractComponent {
 		case SET_NODE_SIZE:
 			ctrl.paintNodeSize(target, graphProperties);
 			break;
-		case SET_VISUAL_STYLE:
-			ctrl.paintVisualStyle(target, graphProperties);
-			break;
 		case SET_TEXT_VISIBILITY:
 			ctrl.paintTextVisibility(target, graphProperties);
-			break;
-		case SET_OPTIMIZED_STYLES:
-			ctrl.paintOptimizedStyles(target, graphProperties);
 			break;
 		case UPDATE_NODE:
 			ctrl.updateNode(target, graphProperties, updatedNode);
@@ -130,17 +124,6 @@ public class Cytographer extends AbstractComponent {
 	public void setTextVisible(final boolean b) {
 		currentOperation = GraphOperation.SET_TEXT_VISIBILITY;
 		graphProperties.setTextVisible(b);
-		requestRepaint();
-	}
-
-	/**
-	 * Optimize styles to minimize client-server traffic
-	 * 
-	 * @param b
-	 */
-	public void setStyleOptimization(final boolean b) {
-		currentOperation = GraphOperation.SET_OPTIMIZED_STYLES;
-		graphProperties.setStyleOptimization(b);
 		requestRepaint();
 	}
 

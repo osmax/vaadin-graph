@@ -14,6 +14,8 @@ import org.vaadin.gwtgraphics.client.Group;
 import org.vaadin.gwtgraphics.client.Shape;
 import org.vaadin.gwtgraphics.client.VectorObject;
 import org.vaadin.gwtgraphics.client.shape.Circle;
+import org.vaadin.gwtgraphics.client.shape.Path;
+import org.vaadin.gwtgraphics.client.shape.Rectangle;
 import org.vaadin.gwtgraphics.client.shape.Text;
 
 import com.google.gwt.dom.client.NativeEvent;
@@ -87,9 +89,10 @@ public class VNode extends Group implements ContextListener, MouseDownHandler, M
 
 	public static VNode createANode(final UIDL child, final VCytographer cytographer, final VGraph graph, final String nodeName,
 			final boolean firstNode, final VVisualStyle style) {
-		Circle shape = null;
+
+		Shape shape = null;
 		if (firstNode) {
-			shape = new Circle(child.getIntAttribute("node1x"), child.getIntAttribute("node1y"), style.getNodeSize());
+			shape = createShape(style, child.getIntAttribute("node1x"), child.getIntAttribute("node1y"));
 		} else {
 			shape = new Circle(child.getIntAttribute("node2x"), child.getIntAttribute("node2y"), style.getNodeSize());
 		}
@@ -118,9 +121,37 @@ public class VNode extends Group implements ContextListener, MouseDownHandler, M
 			shape.setStrokeWidth(child.getIntAttribute("_n1bw"));
 		}
 		if (child.hasAttribute("_n1s")) {
-			shape.setRadius(child.getIntAttribute("_n1s") / 2);
+			if (shape instanceof Circle) {
+				((Circle) shape).setRadius(child.getIntAttribute("_n1s") / 2);
+			} else {
+
+			}
 		}
 		return node;
+	}
+
+	private static Shape createShape(final VVisualStyle style, final int x, final int y) {
+		Shape shape = null;
+		final int size = style.getNodeSize();
+		if (style.getNodeShape().equals("Rectangle")) {
+			shape = new Rectangle(x, y, size, size);
+		} else if (style.getNodeShape().equals("Triangle")) {
+			shape = new Path(x, y);
+			final float height = size * (float) Math.sqrt(3f) / 4f;
+			((Path) shape).moveTo(x + size / 2, (int) (y + height));
+			((Path) shape).moveTo(x + size, y);
+			((Path) shape).moveTo(x, y);
+		} else if (style.getNodeShape().equals("Diamond")) {
+			shape = new Path(x, y);
+			final float height = size * (float) Math.sqrt(3f) / 4f;
+			((Path) shape).moveTo(x + size / 2, (int) (y + height));
+			((Path) shape).moveTo(x + size, y);
+			((Path) shape).moveTo(x + size / 2, (int) (y - height));
+			((Path) shape).moveTo(x, y);
+		} else {
+			shape = new Circle(x, y, size);
+		}
+		return shape;
 	}
 
 	public static VNode createANode(final float x, final float y, final VCytographer cytographer, final VGraph graph,

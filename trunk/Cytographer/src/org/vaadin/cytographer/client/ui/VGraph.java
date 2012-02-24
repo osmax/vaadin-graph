@@ -352,4 +352,8 @@ public class VGraph extends VectorObject {
 			}
 		}
 	}
+
+	public Map<String, VEdge> getEdges() {
+		return edges;
+	}
 }
