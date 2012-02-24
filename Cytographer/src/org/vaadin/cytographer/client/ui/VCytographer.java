@@ -394,12 +394,11 @@ public class VCytographer extends Composite implements Paintable, ClickHandler, 
 			n.setY((float) ((n.getY() - centerY) * factor) + centerY);
 
 			if (n.getView() instanceof Circle) {
-				/*
-				 * if (delta > 1) { ((Circle) n.getView()).setRadius((((Circle)
-				 * n.getView()).getRadius() + 1)); } else { ((Circle)
-				 * n.getView()).setRadius((((Circle) n.getView()).getRadius() -
-				 * 1)); }
-				 */
+				if (factor > 1) {
+					((Circle) n.getView()).setRadius((((Circle) n.getView()).getRadius() + 1));
+				} else {
+					((Circle) n.getView()).setRadius((((Circle) n.getView()).getRadius() - 1));
+				}
 			}
 			graph.updateEdges(n, false);
 		}
@@ -488,5 +487,25 @@ public class VCytographer extends Composite implements Paintable, ClickHandler, 
 	private void deleteEdge(final VEdge edge, final boolean immediate) {
 		client.updateVariable(paintableId, "removedEdge", edge.getName(), immediate);
 		graph.removeEdge(edge);
+	}
+
+	public void clearSelections() {
+		for (final VEdge edge : graph.getSelectedEdges()) {
+			graph.setEdgeSelected(edge, false);
+		}
+		for (final VNode node : graph.getSelectedShapes()) {
+			graph.setNodeSelected(node, false);
+		}
+		nodeOrEdgeSelectionChanged();
+	}
+
+	public void selectAll() {
+		for (final VEdge edge : graph.getEdges().values()) {
+			graph.setEdgeSelected(edge, true);
+		}
+		for (final VNode node : graph.getNodes().values()) {
+			graph.setNodeSelected(node, true);
+		}
+		nodeOrEdgeSelectionChanged();
 	}
 }

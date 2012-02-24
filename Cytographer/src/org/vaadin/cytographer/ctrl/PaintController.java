@@ -17,6 +17,7 @@ import cytoscape.Cytoscape;
 import cytoscape.visual.EdgeAppearance;
 import cytoscape.visual.LineStyle;
 import cytoscape.visual.NodeAppearance;
+import cytoscape.visual.NodeShape;
 import cytoscape.visual.VisualMappingManager;
 import cytoscape.visual.VisualPropertyType;
 import cytoscape.visual.VisualStyle;
@@ -49,6 +50,8 @@ public class PaintController {
 		final LineStyle ls = (LineStyle) vs.getEdgeAppearanceCalculator().getDefaultAppearance().get(VisualPropertyType.EDGE_LINE_STYLE);
 		final String dashArray = getDashArray(ls);
 
+		final NodeShape shape = (NodeShape) vs.getNodeAppearanceCalculator().getDefaultAppearance().get(VisualPropertyType.NODE_SHAPE);
+
 		Number ns = (Number) vs.getNodeAppearanceCalculator().getDefaultAppearance().get(VisualPropertyType.NODE_SIZE);
 		if (gp.getNodeSize() > 0) {
 			ns = gp.getNodeSize();
@@ -72,6 +75,7 @@ public class PaintController {
 		target.addAttribute("efs", efs.intValue());
 		target.addAttribute("nfs", nfs.intValue());
 		target.addAttribute("eda", dashArray);
+		target.addAttribute("shp", shape.name());
 
 		for (final int ei : gp.getEdges()) {
 			final Edge e = gp.getNetwork().getEdge(ei);
@@ -121,6 +125,8 @@ public class PaintController {
 				target.addAttribute("_n1bc", getRGB((Color) n1a.get(VisualPropertyType.NODE_BORDER_COLOR)));
 				target.addAttribute("_n1fc", getRGB((Color) n1a.get(VisualPropertyType.NODE_FILL_COLOR)));
 				target.addAttribute("_n1bw", ((Number) n1a.get(VisualPropertyType.NODE_LINE_WIDTH)).intValue());
+				target.addAttribute("_n1bs", ((NodeShape) n1a.get(VisualPropertyType.NODE_SHAPE)).name());
+
 				if (gp.getNodeSize() > 0) {
 					target.addAttribute("_n1s", ns.intValue());
 				} else {
@@ -131,6 +137,7 @@ public class PaintController {
 				target.addAttribute("_n2fc", getRGB((Color) n2a.get(VisualPropertyType.NODE_FILL_COLOR)));
 				target.addAttribute("_n2bw", ((Number) n2a.get(VisualPropertyType.NODE_LINE_WIDTH)).intValue());
 				target.addAttribute("_n2s", ((Number) n2a.get(VisualPropertyType.NODE_SIZE)).intValue());
+				target.addAttribute("_n2bs", ((NodeShape) n1a.get(VisualPropertyType.NODE_SHAPE)).name());
 				target.addAttribute("_eda", _dashArray);
 			}
 			target.endTag("e");
@@ -154,6 +161,8 @@ public class PaintController {
 					target.addAttribute("_n1bc", getRGB((Color) n1a.get(VisualPropertyType.NODE_BORDER_COLOR)));
 					target.addAttribute("_n1fc", getRGB((Color) n1a.get(VisualPropertyType.NODE_FILL_COLOR)));
 					target.addAttribute("_n1bw", ((Number) n1a.get(VisualPropertyType.NODE_LINE_WIDTH)).intValue());
+					target.addAttribute("_n1bs", ((NodeShape) n1a.get(VisualPropertyType.NODE_SHAPE)).name());
+
 					if (gp.getNodeSize() > 0) {
 						target.addAttribute("_n1s", ns.intValue());
 					} else {
@@ -190,16 +199,8 @@ public class PaintController {
 		target.addAttribute("ns", (int) graphProperties.getNodeSize());
 	}
 
-	public void paintVisualStyle(final PaintTarget target, final GraphProperties graphProperties) throws PaintException {
-		// TODO
-	}
-
 	public void paintTextVisibility(final PaintTarget target, final GraphProperties graphProperties) throws PaintException {
 		target.addAttribute("texts", graphProperties.isTextsVisible());
-	}
-
-	public void paintOptimizedStyles(final PaintTarget target, final GraphProperties graphProperties) throws PaintException {
-		// TODO
 	}
 
 	public void updateNode(final PaintTarget target, final GraphProperties graphProperties, final String nodeId) throws PaintException {

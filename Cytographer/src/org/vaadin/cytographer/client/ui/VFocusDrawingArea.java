@@ -22,6 +22,8 @@ import com.vaadin.terminal.gwt.client.VConsole;
 public class VFocusDrawingArea extends DrawingArea implements ContextListener, HasAllKeyHandlers, HasFocusHandlers, MouseDownHandler {
 	private final VCytographer cytographer;
 	private Command delCommand = null;
+	private Command clearSelCommand = null;
+	private Command selectAllCommand = null;
 
 	public VFocusDrawingArea(final VCytographer vCytographer, final int width, final int height) {
 		super(width, height);
@@ -51,12 +53,19 @@ public class VFocusDrawingArea extends DrawingArea implements ContextListener, H
 
 	@Override
 	public Command[] getCommands() {
-		return new Command[] { delCommand };
+		return new Command[] { selectAllCommand, clearSelCommand, delCommand };
 	}
 
 	@Override
 	public String getCommandName(final Command command) {
-		return "Delete selected items";
+		if (command.equals(selectAllCommand)) {
+			return "Select all";
+		} else if (command.equals(clearSelCommand)) {
+			return "Clear selection";
+		} else if (command.equals(delCommand)) {
+			return "Delete selected items";
+		}
+		return "?";
 	}
 
 	@Override
@@ -68,6 +77,21 @@ public class VFocusDrawingArea extends DrawingArea implements ContextListener, H
 				cytographer.deleteSelectedItems();
 			}
 		};
+		clearSelCommand = contextMenu.new ContextMenuCommand() {
+			@Override
+			public void execute() {
+				super.execute();
+				cytographer.clearSelections();
+			}
+		};
+		selectAllCommand = contextMenu.new ContextMenuCommand() {
+			@Override
+			public void execute() {
+				super.execute();
+				cytographer.selectAll();
+			}
+		};
+
 	}
 
 	@Override
